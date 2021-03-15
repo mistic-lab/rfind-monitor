@@ -6,9 +6,38 @@ Pull integrated spectra from endpoint and display spectrum, waterfall plot. Allo
 
 This should all be running as an app and available by hitting some URL in modern browsers.
 
-## To start
+## Getting started
 
-Same as above but without the endpoint. Simulate it for now.
+Setup a venv and source it
+
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate
+```
+
+update pip
+
+```bash
+(venv)$ pip install --upgrade pip
+```
+
+Install requirements using the included [requirements.txt](./requirements.txt) file
+
+```bash
+(venv)$ pip install -r requirements.txt
+```
+
+Build the simulation data
+
+```bash
+(venv)$ python dataService.py
+```
+
+Run the app.
+
+```bash
+(venv)$ python app.py
+```
 
 ## Refs
 
