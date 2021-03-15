@@ -47,7 +47,7 @@ app.layout = html.Div([
         dcc.Graph(id='waterfall', responsive=True, config=dict(displayModeBar=False, doubleClick='reset'), 
             figure={
                 'data': [{
-                    'type': 'heatmapgl', #* heatmapgl is also available but double clicking doesn't reset to home?
+                    'type': 'heatmap',
                     'z': spec[0:waterfall_height],
                     # 'aspect': 'equal',
                     'colorbar': {
@@ -66,6 +66,9 @@ app.layout = html.Div([
                         'r':0,
                         'l':0,
                     },
+                    'yaxis': {
+                        'fixedrange': True
+                    }
                 }
             }
         )
