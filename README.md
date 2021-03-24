@@ -30,7 +30,7 @@ Install requirements using the included [requirements.txt](./requirements.txt) f
 Build the simulation data
 
 ```bash
-(venv)$ python dataService.py
+(venv)$ python dataGenerator.py
 ```
 
 Run the app.

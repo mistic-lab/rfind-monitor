@@ -2,14 +2,20 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import h5py
 import numpy as np
 
-simDataFile = h5py.File('data.h5','r')
-spec = simDataFile['spec']
+from dataService import fetch_integration
 
 waterfall_height = 200 # px
+simDataFile = h5py.File('data.h5','r')
+
+spec = np.zeros((waterfall_height, len(simDataFile['freqs'])))
+# spec = simDataFile['spec']
+
+
+
 
 
 app = dash.Dash(__name__)
@@ -38,7 +44,8 @@ app.layout = html.Div([
                         'l':0,
                     },
                     'yaxis': {
-                        'range': [0,60]
+                        'range': [0,60],
+                        'fixedrange': True,
                     },
                 }
             },
@@ -48,7 +55,7 @@ app.layout = html.Div([
             figure={
                 'data': [{
                     'type': 'heatmap',
-                    'z': spec[0:waterfall_height],
+                    'z': spec,
                     # 'aspect': 'equal',
                     'colorbar': {
                         'len': 0.5,
@@ -67,11 +74,12 @@ app.layout = html.Div([
                         'l':0,
                     },
                     'yaxis': {
-                        'fixedrange': True
+                        'fixedrange': True,
                     }
                 }
             }
-        )
+        ),
+        # dcc.Store(id='data-store', storage_type='memory', data={'img': spec}) # memory means every page refresh. We want 'session' (every time the tab closes)
     ]),
 ],
 style={'height':'100vh'}
@@ -79,28 +87,52 @@ style={'height':'100vh'}
 
 
 ## Callbacks 
+
+# When playback speed is changed with the GUI the Interval rate is changed
 @app.callback(
     Output("refresh_rate", "interval"),
-    [Input("refresh_rate_chooser", "value")], prevent_initial_call=True)
+    [Input("refresh_rate_chooser", "value")],
+    prevent_initial_call=True
+)
 def update_refresh_rate(rate):
     return rate*1000
 
-@app.callback([
-    Output("spec", "extendData"),
-    Output("waterfall", "extendData")
-], [Input("refresh_rate", "n_intervals")], prevent_initial_call=True)
-def update_spec(index):
-    newSpec = spec[index:index+waterfall_height]
-    newLine = spec[index]
-    updatedSpec = dict(y=[newLine]), [0], spec.shape[1]
-    updatedWaterfall = dict(z=[newSpec]),[0], waterfall_height
 
-    #TODO This would be better since it would not need a full new matrix each time
-    # newSpec = spec[index] 
-    # updatedSpec = dict(y=[newSpec]), [0], spec.shape[1]
+
+# Whenever the Interval triggers this runs
+@app.callback(
+    [
+        Output("spec", "extendData"),
+        Output("waterfall", "extendData"),
+        # Output("data-store", "data")
+    ],
+    [
+        Input("refresh_rate", "n_intervals") # output n_intervals, an int
+    ],
+    # State("data-store", "data"), # while I think this is the smartest avenue, a global var seems faster
+    prevent_initial_call=True
+)
+def update_spec(index,spec=spec):
+    # newSpec = spec[index:index+waterfall_height]
+    # newLine = spec[index]
+    # updatedSpec = dict(y=[newLine]), [0], spec.shape[1]
     # updatedWaterfall = dict(z=[newSpec]),[0], waterfall_height
+    newLine, freqs, t, fs, NFFT = fetch_integration(index,simDataFile)
+
+    # app.logger.info(spec.shape)
+
+    spec[0:-1] = spec[1:]
+    spec[-1] = newLine
+
+    updatedSpec = dict(y=[newLine]), [0], spec.shape[1]
+    updatedWaterfall = {'z': [spec]}, [0], waterfall_height
 
     return updatedSpec, updatedWaterfall
+
+
+
+
+
 
 #TODO use relayoutData from zoom event on waterfall to update xaxis on spec
 #TODO https://dash.plotly.com/interactive-graphing
