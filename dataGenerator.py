@@ -1,13 +1,14 @@
-from os import write
 import numpy as np
 import h5py
 
-fs = 125e6
-fcs = [25e6, 85e6]
+fs = (400e6)/3 * 16
+fcs = [25e6, 85e6, 41e6, 1e9]
 phase_incrs = [0]*len(fcs)
 
-NFFT = 1024
-t_int = NFFT/fs
+sweeps = [(92e6,94e6,0.1)] #f1,f2,T
+NFFT = 40000*16
+t_int = NFFT/fs # so that each fft is one integration
+
 
 t_arr = np.linspace(0, t_int, NFFT)
 
@@ -20,7 +21,11 @@ def integrated_spec_gen(noise_pwr, time):
         for i, fc in enumerate(fcs):
             output += np.exp(2j*np.pi*fc*t_arr+phase_incrs[i])
             phase_incrs[i] = (phase_incrs[i] +  t_int*(2*np.pi)*fc) % (2*np.pi) #TODO check this I'm not thinking straight rn
-        output = 10.*np.log10(np.abs(np.fft.fft(output)))
+        for f1,f2,T in sweeps:
+            sweep_t_portion = np.linspace(t_incr,t_incr*2,NFFT)
+            sweep_portion = np.exp(1j*(np.pi*((f2-f1)/T)*np.square(sweep_t_portion)))
+            output += sweep_portion
+        output = 10.*np.log10(np.abs(np.fft.fftshift(np.fft.fft(output))))
 
         yield (output, t_incr)
         t_incr += t_int
