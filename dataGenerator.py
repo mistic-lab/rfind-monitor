@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-fs = (400e6)/3 * 16
+fs = 16 * (400e6)/3
 fcs = [25e6, 85e6, 41e6, 1e9]
 phase_incrs = [0]*len(fcs)
 
@@ -23,7 +23,7 @@ def integrated_spec_gen(noise_pwr, time):
             phase_incrs[i] = (phase_incrs[i] +  t_int*(2*np.pi)*fc) % (2*np.pi) #TODO check this I'm not thinking straight rn
         for f1,f2,T in sweeps:
             sweep_t_portion = np.linspace(t_incr,t_incr*2,NFFT)
-            sweep_portion = np.exp(1j*(np.pi*((f2-f1)/T)*np.square(sweep_t_portion)))
+            sweep_portion = np.exp(1j*(np.pi*((f2+f1)/T)*np.square(sweep_t_portion)))
             output += sweep_portion
         output = 10.*np.log10(np.abs(np.fft.fftshift(np.fft.fft(output))))
 
@@ -44,7 +44,7 @@ def write_to_h5(noise_pwr, time):
 
         n_integrations = np.ceil(time/t_int)
 
-        h5f.create_dataset('spec', (n_integrations,NFFT))
+        h5f.create_dataset('spec', (n_integrations, NFFT))
         h5f.create_dataset('freqs',data=freqs)
         h5f.create_dataset('times', (n_integrations,))
 
@@ -54,5 +54,5 @@ def write_to_h5(noise_pwr, time):
 
 
 
-write_to_h5(0.5, 0.05)
+write_to_h5(0.5, 0.15)
 
