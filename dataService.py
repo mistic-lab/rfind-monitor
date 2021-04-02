@@ -1,19 +1,30 @@
 import numpy as np
 
-def rebin(arr, length):
-    """
-    len(arr) has to be at least length*2
-    """
 
-    out = np.empty((length))
-        
-    n = int(np.ceil(len(arr)/length)) # number to bin together until the boundary condition
-    nearest_size_down = int(np.floor(len(arr)/n))
-
-    out[:nearest_size_down] = arr[:nearest_size_down*n].reshape(-1,n).max(axis=1)
-    out[nearest_size_down:] = arr[-1]
-
-    return out
+def bisection(array,value):
+    '''Given an ``array`` , and given a ``value`` , returns an index j such that ``value`` is between array[j]
+    and array[j+1]. ``array`` must be monotonic increasing. j=-1 or j=len(array) is returned
+    to indicate that ``value`` is out of range below and above respectively.'''
+    n = len(array)
+    if (value < array[0]):
+        return -1
+    elif (value > array[n-1]):
+        return n
+    jl = 0# Initialize lower
+    ju = n-1# and upper limits.
+    while (ju-jl > 1):# If we are not yet done,
+        jm=(ju+jl) >> 1# compute a midpoint with a bitshift
+        if (value >= array[jm]):
+            jl=jm# and replace either the lower limit
+        else:
+            ju=jm# or the upper limit, as appropriate.
+        # Repeat until the test condition is satisfied.
+    if (value == array[0]):# edge cases at bottom
+        return 0
+    elif (value == array[n-1]):# and top
+        return n-1
+    else:
+        return jl
 
 def fetch_integration(integration, h5FileHandle, f1, f2, length):
     """
@@ -26,31 +37,21 @@ def fetch_integration(integration, h5FileHandle, f1, f2, length):
     - f2: end frequency (Hz)
     - length: how many samples should I return?
     """
-    fs = h5FileHandle.attrs['fs']
-    NFFT = h5FileHandle.attrs['NFFT']
-
     allFreqs = np.array(h5FileHandle['freqs'])
-    index1 = np.argmin([abs(f1-f) for f in allFreqs])
-    index2 = np.argmin([abs(f2-f) for f in allFreqs])
+    index1 = bisection(allFreqs, f1)
+    index2 = bisection(allFreqs, f2)-1
 
-    if (index2+1)-(index1+1) == length: #* The +1s handles the 0-999 case
-        #* If it's already the correct length
-        needsRebin = False
-    elif ((index2+1)+(index1+1))/length < 2 or ((index2+1)-(index1+1) < length): 
-        #* If it's not the correct length and it's too short to nicely rebin
-        index1=int((index2+index1)/2 - length/2)
-        index2 = int(index1+length)
-        needsRebin = False
-    else:
-        needsRebin = True
+    requested_len = index2-index1+1
+    num_to_bin = int(np.ceil(requested_len/length))
+    even_divisor = int(np.floor(requested_len/num_to_bin))
+    new_length = num_to_bin*even_divisor
 
-    spec = np.array(h5FileHandle['spec'][integration][index1:index2])
+    index2 = int(index1+new_length)
 
-    if needsRebin == True:
-        spec = rebin(spec, length)
+    freqs = np.linspace(allFreqs[index1],allFreqs[index2-1],length)
+    spec = np.empty(length)
+    start = np.array(h5FileHandle['spec'][integration][index1:index2])
 
-    freqs = np.linspace(allFreqs[index1],allFreqs[index2],length)
-
-    t = h5FileHandle['times'][integration]
-
-    return spec, freqs, t, fs, NFFT
+    spec[:even_divisor] = start.reshape(-1,num_to_bin).max(axis=1)
+    spec[even_divisor:] = start[-1]
+    return spec, freqs
