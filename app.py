@@ -10,6 +10,8 @@ from dataService import fetch_integration
 
 waterfall_height = 500 # px
 spec_width = 1000
+y_range = [20, 60]
+# ymin = 20
 simDataFile = h5py.File('data.h5','r')
 
 spec = np.zeros((waterfall_height, spec_width))
@@ -29,9 +31,14 @@ app.layout = html.Div([
         figure={
             'data': [
                 {
-                    'type': 'line',
+                    'type': 'area',
                     'y': spec[0],
                     'x': freqs,
+                    'line': {
+                        'color': 'white',
+                        'width': 2,
+                    },
+                    'fill': 'tozeroy',
                 },
             ],
             'layout': {
@@ -44,16 +51,23 @@ app.layout = html.Div([
                     'l': 0,
                 },
                 'yaxis': {
-                    'range': [20,60],
+                    'range': y_range,
                     'fixedRange': True,
                     # 'title': 'dB',
                     'ticklabelposition': 'inside',
+                    'showticklabels': False,
+                    'color': '#a3a7b0',
+
                 },
                 'xaxis': {
                     'showexponent': 'all',
                     'exponentformat': 'SI',
                     'ticksuffix': 'Hz',
-                }
+                    'color': '#a3a7b0',
+
+                },
+                'plot_bgcolor': '#23272c',
+                'paper_bgcolor': '#23272c',
             }
         },
         style={
@@ -72,9 +86,15 @@ app.layout = html.Div([
                     'len': 0.5,
                     'x': 0.95,
                     'y': 0.95,
-                    'yanchor': 'top'
+                    'yanchor': 'top',
+                    'bgcolor': '#23272c',
+                    'tickfont': {
+                        'color': 'white',
+                    },
                 },
                 'colorscale': 'Rainbow',
+                'zmin': y_range[0],
+                'zmax': y_range[1],
             }],
             'layout': {
                 'width': '100%',
@@ -89,10 +109,16 @@ app.layout = html.Div([
                     'fixedrange': True,
                     'showticklabels': False,
                     'showgrid': False,
+                    'color': '#a3a7b0',
+                    'ticks': '',
                 },
                 'xaxis': {
                     'fixedrange': True,
+                    'color': '#a3a7b0',
+                    'ticks': '',
                 },
+                'plot_bgcolor': '#23272c',
+                'paper_bgcolor': '#23272c',
             }
         },
         style={'height': '100%'}
