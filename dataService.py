@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def bisection(array,value):
     '''Given an ``array`` , and given a ``value`` , returns an index j such that ``value`` is between array[j]
     and array[j+1]. ``array`` must be monotonic increasing. j=-1 or j=len(array) is returned
@@ -50,7 +49,11 @@ def fetch_integration(integration, h5FileHandle, f1, f2, length):
 
     freqs = np.linspace(allFreqs[index1],allFreqs[index2-1],length)
     spec = np.empty(length)
-    start = np.array(h5FileHandle['spec'][integration][index1:index2])
+
+    waterfall_len = h5FileHandle['spec'].shape[0]
+    actual_integration = integration % waterfall_len
+
+    start = np.array(h5FileHandle['spec'][integration % waterfall_len][index1:index2])
 
     spec[:even_divisor] = start.reshape(-1,num_to_bin).max(axis=1)
     spec[even_divisor:] = start[-1]
