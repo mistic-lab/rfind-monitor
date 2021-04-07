@@ -13,6 +13,7 @@ t_int = NFFT/fs # so that each fft is one integration
 t_arr = np.linspace(0, t_int, NFFT)
 
 freqs = np.fft.fftshift(np.fft.fftfreq(NFFT, 1/fs))
+freqs +=np.max(freqs)
 
 def integrated_spec_gen(noise_pwr, time):
     t_incr = 0
@@ -23,7 +24,7 @@ def integrated_spec_gen(noise_pwr, time):
             phase_incrs[i] = (phase_incrs[i] +  t_int*(2*np.pi)*fc) % (2*np.pi) #TODO check this I'm not thinking straight rn
         for f1,f2,T in sweeps:
             sweep_t_portion = np.linspace(t_incr,t_incr*2,NFFT)
-            sweep_portion = np.exp(1j*(np.pi*((f2+f1)/T)*np.square(sweep_t_portion)))
+            sweep_portion = np.exp(1j*(np.pi*((f2-f1)/T)*np.square(sweep_t_portion)))
             output += sweep_portion
         output = 10.*np.log10(np.abs(np.fft.fftshift(np.fft.fft(output))))
 
@@ -49,6 +50,7 @@ def write_to_h5(noise_pwr, time):
         h5f.create_dataset('times', (n_integrations,))
 
         for i, (output, t) in enumerate(integrated_spec_gen(noise_pwr, time)):
+            print(f"{i}/{len(n_integrations)}")
             h5f['spec'][i]=output
             h5f['times'][i]=t
 
