@@ -5,7 +5,7 @@ fs = 16 * (400e6)/3
 fcs = [25e6, 85e6, 41e6, 1e9]
 phase_incrs = [0]*len(fcs)
 
-sweeps = [(92e6,94e6,0.1)] #f1,f2,T
+sweeps = [(92e6,94e6,0.1), (-350e6,-15e6, 0.3)] #f1,f2,T
 NFFT = 40000*16
 t_int = NFFT/fs # so that each fft is one integration
 
@@ -54,5 +54,5 @@ def write_to_h5(noise_pwr, time):
 
 
 
-write_to_h5(0.5, 0.15)
+write_to_h5(1, 5)
 

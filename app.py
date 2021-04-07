@@ -18,7 +18,7 @@ freqs = np.linspace(8*(-(400e6)/3), 8*(400e6)/3, spec_width)
 
 
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, requests_pathname_prefix='/live/')
 
 app.layout = html.Div(
     [
@@ -161,10 +161,10 @@ def update_spec(index, relayoutData, spec=spec, freqs=freqs):
 
 
 
+server = app.server
 
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
+    simDataFile.close()
 
-# app.run_server(debug=True)
-app.run_server()
-
-simDataFile.close()
