@@ -50,7 +50,7 @@ def write_to_h5(noise_pwr, time):
         h5f.create_dataset('times', (n_integrations,))
 
         for i, (output, t) in enumerate(integrated_spec_gen(noise_pwr, time)):
-            print(f"{i}/{len(n_integrations)}")
+            print(f"{i}/{n_integrations}")
             h5f['spec'][i]=output
             h5f['times'][i]=t
 
