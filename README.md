@@ -63,7 +63,21 @@ Run the app.
     mv web-spectra-explorer/data.h5 public_html/data/
     ```
 
-7. Create a file `public_html/wsgi/dash.wsgi` that contains
+7. Edit `web-spectra-explorer/dashApp.py` and change the line
+
+    ```python
+    simDataFile = h5py.File('data.h5','r')
+    ```
+
+    to be
+
+    ```python
+   simDataFile = h5py.File('/home/ubuntu/public_html/data/data.h5','r')
+
+    ```
+
+
+8. Create a file `public_html/wsgi/dash.wsgi` that contains
 
    ```python
    #!/usr/bin/python3
@@ -73,7 +87,7 @@ Run the app.
    from dashApp import server as application
    ```
 
-8. Create a file `/etc/apache2/sites-available/dash.conf` that contains
+9. Create a file `/etc/apache2/sites-available/dash.conf` that contains
 
    ```bash
    WSGIDaemonProcess dashApp user=ubuntu group=ubuntu home=/home/ubuntu threads=5
@@ -83,17 +97,17 @@ Run the app.
    WSGIApplicationGroup %{GLOBAL}
    ```
 
-9. Edit the `DocumentRoot` line in `/etc/apache2/sites-available/000-default.conf` to read
+10. Edit the `DocumentRoot` line in `/etc/apache2/sites-available/000-default.conf` to read
 
    ```bash 
    DocumentRoot /home/ubuntu/public_html
    ```
 
-10. Edit `/etc/apache2/apache2.conf`.
+11. Edit `/etc/apache2/apache2.conf`.
     - Change the line `<Directory /var/www/html/>` to `<Directory /home/ubuntu/public_html/>`.
     - Add `RedirectMatch ^/$ /live` to the bottom of the file.
 
-11. Restart the apache server with `sudo systemctl reload apache2`.
+12. Restart the apache server with `sudo systemctl reload apache2`.
 
 ## Refs
 
