@@ -14,11 +14,12 @@ y_range = [20, 60]
 simDataFile = h5py.File('data.h5','r')
 
 spec = np.zeros((waterfall_height, spec_width))
-freqs = np.linspace(8*(-(400e6)/3), 8*(400e6)/3, spec_width)
+freqs = np.linspace(0, 16*(400e6)/3, spec_width)
 
 
 
-app = dash.Dash(__name__, requests_pathname_prefix='/live/')
+app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monitor', update_title=None)
+# app = dash.Dash(__name__, title='RFInd Monitor', update_title=None)
 
 app.layout = html.Div(
     [
@@ -156,6 +157,7 @@ def update_spec(index, relayoutData, spec=spec, freqs=freqs):
 
     updatedSpec = dict(y=[newLine], x=[freqs]), [0], spec_width
     updatedWaterfall = dict(z=[spec]), [0], waterfall_height
+
 
     return updatedSpec, updatedWaterfall
 

@@ -56,5 +56,5 @@ def write_to_h5(noise_pwr, time):
 
 
 
-write_to_h5(1, 5)
+write_to_h5(1, 0.5)
 
