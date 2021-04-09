@@ -1,4 +1,9 @@
 import numpy as np
+import zmq
+import zlib
+import pickle
+
+from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
 
 def bisection(array,value):
     '''Given an ``array`` , and given a ``value`` , returns an index j such that ``value`` is between array[j]
@@ -51,10 +56,41 @@ def fetch_integration(integration, h5FileHandle, f1, f2, length):
     spec = np.empty(length)
 
     waterfall_len = h5FileHandle['spec'].shape[0]
-    actual_integration = integration % waterfall_len
 
     start = np.array(h5FileHandle['spec'][integration % waterfall_len][index1:index2])
 
     spec[:even_divisor] = start.reshape(-1,num_to_bin).max(axis=1)
     spec[even_divisor:] = start[-1]
     return spec, freqs
+
+def pull_integration(receiver, f1, f2, length):
+
+    index1 = bisection(FULL_FREQS, f1)
+    index2 = bisection(FULL_FREQS, f2)-1
+
+
+    requested_len = index2-index1+1
+    num_to_bin = int(np.ceil(requested_len/length))
+    even_divisor = int(np.floor(requested_len/num_to_bin))
+    new_length = num_to_bin*even_divisor
+
+    index2 = int(index1+new_length)
+
+    current_freqs = np.linspace(FULL_FREQS[index1],FULL_FREQS[index2-1],length)
+    reduced_integration = np.empty(length)
+
+    msg = receiver.recv(zmq.NOBLOCK)
+    p = zlib.decompress(msg)
+    latest_integration = pickle.loads(p)
+    
+    latest_integration = latest_integration[index1:index2]
+    reduced_integration[:even_divisor] = latest_integration.reshape(-1,num_to_bin).max(axis=1)
+    reduced_integration[even_divisor:] = latest_integration[-1]
+
+    return reduced_integration, current_freqs
+
+
+
+
+
+

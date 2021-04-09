@@ -13,8 +13,8 @@ This should all be running as an app and available by hitting some URL in modern
 Setup a venv and source it
 
 ```bash
-$ python3 -m venv venv
-$ source venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 update pip

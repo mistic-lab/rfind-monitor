@@ -3,18 +3,28 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
 import h5py
 import numpy as np
+import zmq
 
-from dataService import fetch_integration
+from dataService import fetch_integration, pull_integration
+from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
 
-waterfall_height = 200 # px
-spec_width = 1000
+
+context = zmq.Context()
+consumer_receiver = context.socket(zmq.PULL)
+consumer_receiver.connect("tcp://127.0.0.1:5557")
+poller = zmq.Poller()
+poller.register(consumer_receiver, zmq.POLLIN)
+
 y_range = [20, 60]
-simDataFile = h5py.File('data.h5','r')
+# simDataFile = h5py.File('data.h5','r')
 
-spec = np.zeros((waterfall_height, spec_width))
-freqs = np.linspace(0, 16*(400e6)/3, spec_width)
+spec = np.zeros((WATERFALL_HEIGHT, SPEC_WIDTH))
+current_freqs = np.linspace(0, 2e9, SPEC_WIDTH)
+
+
 
 
 
@@ -23,14 +33,14 @@ app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monito
 
 app.layout = html.Div(
     [
-        dcc.Interval(id='refresh_rate', interval=1000), # ms
+        dcc.Interval(id='check_for_data', interval=500), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
                     {
                         'type': 'scattergl',
                         'y': spec[0],
-                        'x': freqs,
+                        'x': current_freqs,
                         'line': {
                             'color': 'white',
                             'width': 2,
@@ -77,7 +87,7 @@ app.layout = html.Div(
                 'data': [{
                     'type': 'heatmap',
                     'z': spec,
-                    'x': freqs,
+                    'x': current_freqs,
                     'colorbar': {
                         'len': 0.5,
                         'x': 0.98,
@@ -134,29 +144,38 @@ app.layout = html.Div(
         Output("waterfall", "extendData"),
     ],
     [
-        Input("refresh_rate", "n_intervals") # output n_intervals, an int
+        Input("check_for_data", "n_intervals") # output n_intervals, an int
     ],
     [
         State("spec", "relayoutData")
     ],
     prevent_initial_call=True
 )
-def update_spec(index, relayoutData, spec=spec, freqs=freqs):
+def update_spec(index, relayoutData, spec=spec, current_freqs=current_freqs, poller=poller, receiver=consumer_receiver): #TODO globalvars are lame
 
-    if relayoutData and 'xaxis.range[0]' in relayoutData:# and 'xaxis.range[1]' in relayoutData:
-        f1 = int(relayoutData['xaxis.range[0]'])
-        f2 = int(relayoutData['xaxis.range[1]'])
+    socks = dict(poller.poll(1))
+    if not socks:
+        raise PreventUpdate
     else:
-        f1 = freqs[0]
-        f2 = freqs[-1]
+        if relayoutData and 'xaxis.range[0]' in relayoutData:# and 'xaxis.range[1]' in relayoutData:
+            f1 = int(relayoutData['xaxis.range[0]'])
+            f2 = int(relayoutData['xaxis.range[1]'])
+        else:
+            f1 = current_freqs[0]
+            f2 = current_freqs[-1]
     
-    newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
+    newLine, freqs = pull_integration(receiver, f1, f2, SPEC_WIDTH)
+
+    
+
+    
+    # newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
 
     spec[0:-1] = spec[1:]
     spec[-1] = newLine
 
-    updatedSpec = dict(y=[newLine], x=[freqs]), [0], spec_width
-    updatedWaterfall = dict(z=[spec]), [0], waterfall_height
+    updatedSpec = dict(y=[newLine], x=[freqs]), [0], SPEC_WIDTH
+    updatedWaterfall = dict(z=[spec]), [0], WATERFALL_HEIGHT
 
 
     return updatedSpec, updatedWaterfall
@@ -168,5 +187,4 @@ server = app.server
 if __name__ == '__main__':
     app.run_server(debug=True)
 
-    simDataFile.close()
 
