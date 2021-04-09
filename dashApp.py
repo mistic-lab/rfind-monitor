@@ -13,7 +13,7 @@ from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
 
 context = zmq.Context()
 consumer_receiver = context.socket(zmq.PULL)
-consumer_receiver.bind("tcp://127.0.0.1:5569")
+consumer_receiver.bind("tcp://127.0.0.1:5557")
 poller = zmq.Poller()
 poller.register(consumer_receiver, zmq.POLLIN)
 
