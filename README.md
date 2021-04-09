@@ -49,7 +49,7 @@ Run the app.
 
 3. Update the VM with `sudo apt update` and `sudo apt upgrade`
 
-4. Install apache2 and wsgi with `sudo apt install apache2 libapache2-mod-wsgi-py3` (which we'll use to serve both the application and the data)
+4. Install apache2 and wsgi with `sudo apt install apache2 libapache2-mod-wsgi-py3 python3-venv` (which we'll use to serve both the application and the data)
 
 5. Clone this repo into `/home/ubuntu/` then install the venv and build the simulation dataset as described [above](#getting-started). You may want to take a look in [dataService.py](./dataService.py) and see how large a dataset is going to be generated. The current default is ~40 GB.
 
