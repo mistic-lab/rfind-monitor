@@ -4,7 +4,6 @@ import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-import h5py
 import numpy as np
 import zmq
 
@@ -14,12 +13,11 @@ from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
 
 context = zmq.Context()
 consumer_receiver = context.socket(zmq.PULL)
-consumer_receiver.connect("tcp://127.0.0.1:5557")
+consumer_receiver.bind("tcp://127.0.0.1:5569")
 poller = zmq.Poller()
 poller.register(consumer_receiver, zmq.POLLIN)
 
 y_range = [20, 60]
-# simDataFile = h5py.File('data.h5','r')
 
 spec = np.zeros((WATERFALL_HEIGHT, SPEC_WIDTH))
 current_freqs = np.linspace(0, 2e9, SPEC_WIDTH)
@@ -165,10 +163,6 @@ def update_spec(index, relayoutData, spec=spec, current_freqs=current_freqs, pol
             f2 = current_freqs[-1]
     
     newLine, freqs = pull_integration(receiver, f1, f2, SPEC_WIDTH)
-
-    
-
-    
     # newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
 
     spec[0:-1] = spec[1:]
