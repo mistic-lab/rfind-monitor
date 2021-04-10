@@ -13,7 +13,7 @@ from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
 
 context = zmq.Context()
 consumer_receiver = context.socket(zmq.PULL)
-consumer_receiver.bind("tcp://127.0.0.1:5557")
+consumer_receiver.bind("tcp://*:5557")
 
 poller = zmq.Poller()
 poller.register(consumer_receiver, zmq.POLLIN)
@@ -162,18 +162,22 @@ def update_spec(index, relayoutData, spec=spec, current_freqs=current_freqs, pol
         else:
             f1 = current_freqs[0]
             f2 = current_freqs[-1]
-    
-        newLine, freqs = pull_integration(receiver, f1, f2, SPEC_WIDTH)
-        # newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
+        
+        try:
+            newLine, freqs = pull_integration(receiver, f1, f2, SPEC_WIDTH)
+            # newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
 
-        spec[0:-1] = spec[1:]
-        spec[-1] = newLine
+            spec[0:-1] = spec[1:]
+            spec[-1] = newLine
 
-        updatedSpec = dict(y=[newLine], x=[freqs]), [0], SPEC_WIDTH
-        updatedWaterfall = dict(z=[spec]), [0], WATERFALL_HEIGHT
+            updatedSpec = dict(y=[newLine], x=[freqs]), [0], SPEC_WIDTH
+            updatedWaterfall = dict(z=[spec]), [0], WATERFALL_HEIGHT
 
 
-        return updatedSpec, updatedWaterfall
+            return updatedSpec, updatedWaterfall
+        
+        except zmq.error.Again:
+            raise PreventUpdate
 
 
 
