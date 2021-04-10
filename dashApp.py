@@ -27,7 +27,7 @@ current_freqs = np.linspace(0, 2e9, SPEC_WIDTH)
 
 
 
-app = dash.Dash(__name__, requests_pathname_prefix='/live', title='RFInd Monitor', update_title=None)
+app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monitor', update_title=None)
 # app = dash.Dash(__name__, title='RFInd Monitor', update_title=None)
 
 app.layout = html.Div(
