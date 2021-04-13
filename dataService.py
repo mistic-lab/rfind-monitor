@@ -3,7 +3,7 @@ import zmq
 import zlib
 import pickle
 
-from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
+import const
 
 def bisection(array,value):
     '''Given an ``array`` , and given a ``value`` , returns an index j such that ``value`` is between array[j]
@@ -65,8 +65,8 @@ def fetch_integration(integration, h5FileHandle, f1, f2, length):
 
 def pull_integration(receiver, f1, f2, length):
 
-    index1 = bisection(FULL_FREQS, f1)
-    index2 = bisection(FULL_FREQS, f2)-1
+    index1 = bisection(const.FULL_FREQS, f1)
+    index2 = bisection(const.FULL_FREQS, f2)-1
 
 
     requested_len = index2-index1+1
@@ -76,7 +76,7 @@ def pull_integration(receiver, f1, f2, length):
 
     index2 = int(index1+new_length)
 
-    current_freqs = np.linspace(FULL_FREQS[index1],FULL_FREQS[index2-1],length)
+    current_freqs = np.linspace(const.FULL_FREQS[index1], const.FULL_FREQS[index2-1], length)
     reduced_integration = np.empty(length)
 
     msg = receiver.recv(zmq.NOBLOCK)

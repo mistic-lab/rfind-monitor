@@ -7,8 +7,8 @@ from dash.exceptions import PreventUpdate
 import numpy as np
 import zmq
 
-from dataService import fetch_integration, pull_integration
-from api import NBINS, SPEC_WIDTH, WATERFALL_HEIGHT, FULL_FREQS
+from dataService import pull_integration
+import const
 
 
 context = zmq.Context()
@@ -20,8 +20,8 @@ poller.register(consumer_receiver, zmq.POLLIN)
 
 y_range = [20, 60]
 
-spec = np.zeros((WATERFALL_HEIGHT, SPEC_WIDTH))
-current_freqs = np.linspace(0, 2e9, SPEC_WIDTH)
+start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH))
+start_freqs = np.linspace(0, 2e9, const.SPEC_WIDTH)
 
 
 
@@ -32,14 +32,15 @@ app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monito
 
 app.layout = html.Div(
     [
+        dcc.Store(id='local', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs}),
         dcc.Interval(id='check_for_data', interval=500), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
                     {
-                        'type': 'scattergl',
-                        'y': spec[0],
-                        'x': current_freqs,
+                        'type': 'scatter', #TODO or scattergl?
+                        'y': start_spec[0],
+                        'x': start_freqs,
                         'line': {
                             'color': 'white',
                             'width': 2,
@@ -85,8 +86,8 @@ app.layout = html.Div(
             figure={
                 'data': [{
                     'type': 'heatmap',
-                    'z': spec,
-                    'x': current_freqs,
+                    'z': start_spec,
+                    'x': start_freqs,
                     'colorbar': {
                         'len': 0.5,
                         'x': 0.98,
@@ -141,18 +142,20 @@ app.layout = html.Div(
     [
         Output("spec", "extendData"),
         Output("waterfall", "extendData"),
+        Output("local", "data"),
     ],
     [
         Input("check_for_data", "n_intervals") # output n_intervals, an int
     ],
     [
-        State("spec", "relayoutData")
+        State("spec", "relayoutData"),
+        State("local", "data")
     ],
     prevent_initial_call=True
 )
-def update_spec(index, relayoutData, spec=spec, current_freqs=current_freqs, poller=poller, receiver=consumer_receiver): #TODO globalvars are lame
+def update_spec(index, relayoutData, storeData, poller=poller, receiver=consumer_receiver):
 
-    socks = dict(poller.poll(1))
+    socks = dict(poller.poll(1)) # This feels wrong. Check for 1ms and if it's not 
     if not socks:
         raise PreventUpdate
     else:
@@ -160,21 +163,21 @@ def update_spec(index, relayoutData, spec=spec, current_freqs=current_freqs, pol
             f1 = int(relayoutData['xaxis.range[0]'])
             f2 = int(relayoutData['xaxis.range[1]'])
         else:
-            f1 = current_freqs[0]
-            f2 = current_freqs[-1]
+            f1=const.FULL_FREQS[0]
+            f2=const.FULL_FREQS[-1]
         
         try:
-            newLine, freqs = pull_integration(receiver, f1, f2, SPEC_WIDTH)
-            # newLine, freqs = fetch_integration(index, simDataFile, f1=f1, f2=f2, length=spec_width)
+            newLine, freqs = pull_integration(receiver, f1, f2, const.SPEC_WIDTH)
 
-            spec[0:-1] = spec[1:]
-            spec[-1] = newLine
+            storeData['spec'].pop(0)
+            storeData['spec'].append(newLine)
+            storeData['freqs'] = freqs
 
-            updatedSpec = dict(y=[newLine], x=[freqs]), [0], SPEC_WIDTH
-            updatedWaterfall = dict(z=[spec]), [0], WATERFALL_HEIGHT
+            updatedSpec = dict(y=[newLine], x=[freqs]), [0], const.SPEC_WIDTH
+            updatedWaterfall = dict(z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
 
 
-            return updatedSpec, updatedWaterfall
+            return updatedSpec, updatedWaterfall, storeData
         
         except zmq.error.Again:
             raise PreventUpdate
