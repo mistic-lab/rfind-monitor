@@ -16,6 +16,7 @@ import const
 
 
 # h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
+shared_brain = Brain()
 
 y_range = [20, 60]
 
@@ -30,10 +31,9 @@ start_times = start_times[::-1]
 
 
 
-# app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monitor', update_title=None)
-app = dash.Dash(__name__, title='RFInd Monitor', update_title=None)
+app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monitor', update_title=None)
+# app = dash.Dash(__name__, title='RFInd Monitor', update_title=None)
 
-shared_brain = Brain()
 
 app.layout = html.Div(
     [
