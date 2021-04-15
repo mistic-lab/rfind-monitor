@@ -36,8 +36,8 @@ app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monito
 app.layout = html.Div(
     [
         dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'times': start_times}),
-        dcc.Interval(id='check_for_data', interval=200), # ms
-        dcc.Interval(id='update_gui', interval=2000), # ms
+        dcc.Interval(id='check_for_data', interval=500), # ms
+        dcc.Interval(id='update_gui', interval=1000), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
@@ -147,61 +147,19 @@ app.layout = html.Div(
 )
 
 
-@app.callback(
-    [
-        Output("userStore", "data"),
-    ],
-    [
-        Input("check_for_data", "n_intervals") # output n_intervals, an int
-    ],
-    [
-        State("spec", "relayoutData"),
-        State("userStore", "data")
-    ],
-)
-def update_store(index, relayoutData, storeData):#, poller=poller, receiver=consumer_receiver):
-
-    # try:
-    app.logger.info("Planning to update store")
-    latest_integration, timestamp = receive_zmq()
-
-    if relayoutData and 'xaxis.range[0]' in relayoutData:
-        f1 = int(relayoutData['xaxis.range[0]'])
-        f2 = int(relayoutData['xaxis.range[1]'])
-    else:
-        f1=const.FULL_FREQS[0]
-        f2=const.FULL_FREQS[-1]
-
-    reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
-
-    storeData['spec'].pop(0)
-    storeData['spec'].append(reduced_integration)
-
-    storeData['freqs'] = new_freqs
-
-    timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-    # storeData['times'].pop(0)
-    # storeData['times'].append(timestamp)
-    storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
-
-    app.logger.info(f"Updated the store! {index}")
-    return [storeData]
-
-
-
-
 # @app.callback(
 #     Output("userStore", "data"),
-    
-#     [
-#         Input("check_for_data", "n_intervals") # output n_intervals, an int
-#     ],
+#     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
 #     [
 #         State("spec", "relayoutData"),
 #         State("userStore", "data")
 #     ],
 # )
-# def update_store(index, relayoutData, storeData):
+# def update_store(index, relayoutData, storeData):#, poller=poller, receiver=consumer_receiver):
+
+#     # try:
+#     app.logger.info("Planning to update store")
+#     latest_integration, timestamp = receive_zmq()
 
 #     if relayoutData and 'xaxis.range[0]' in relayoutData:
 #         f1 = int(relayoutData['xaxis.range[0]'])
@@ -209,15 +167,17 @@ def update_store(index, relayoutData, storeData):#, poller=poller, receiver=cons
 #     else:
 #         f1=const.FULL_FREQS[0]
 #         f2=const.FULL_FREQS[-1]
-    
-#     newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
+
+#     reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
 
 #     storeData['spec'].pop(0)
-#     storeData['spec'].append(newLine)
+#     storeData['spec'].append(reduced_integration)
 
-#     storeData['freqs'] = freqs
+#     storeData['freqs'] = new_freqs
 
 #     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+#     # storeData['times'].pop(0)
+#     # storeData['times'].append(timestamp)
 #     storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
 
 #     app.logger.info(f"Updated the store! {index}")
@@ -225,46 +185,58 @@ def update_store(index, relayoutData, storeData):#, poller=poller, receiver=cons
 
 
 
+
 @app.callback(
+    Output("userStore", "data"),
+    [Input("check_for_data", "n_intervals")], # output n_intervals, an int
+    [
+        State("spec", "relayoutData"),
+        State("userStore", "data")
+    ],
+    prevent_initial_call=True
+)
+def update_store(index, relayoutData, storeData):
+
+    if relayoutData and 'xaxis.range[0]' in relayoutData:
+        f1 = int(relayoutData['xaxis.range[0]'])
+        f2 = int(relayoutData['xaxis.range[1]'])
+    else:
+        f1=const.FULL_FREQS[0]
+        f2=const.FULL_FREQS[-1]
+    
+    newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
+
+    storeData['spec'].pop(0)
+    storeData['spec'].append(newLine)
+
+    storeData['freqs'] = freqs
+
+    timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+    storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+
+    app.logger.info(f"Updated the store! {index}")
+    return storeData
+
+
+
+app.clientside_callback(
+    """
+    function (index, storeData) {
+        const updatedSpec = [{y: [storeData['spec'][59]], x: [storeData['freqs']]}, [0], 1000]
+        const updatedWaterfall = [{z: [storeData['spec']]}, [0], 60]
+        return [updatedSpec, updatedWaterfall]
+    }
+    """,
     [
         Output("spec", "extendData"),
         Output("waterfall", "extendData"),
     ],
     [
-        Input("update_gui", "n_intervals") # output n_intervals, an int
+        Input("update_gui", "n_intervals"), # output n_intervals, an int
     ],
-    [
-        State("userStore", "data")
-    ],
+    State("userStore", "data"),
     prevent_initial_call=True
 )
-def update_gui(index, storeData):
-
-    updatedSpec = dict(y=[storeData['spec'][-1]], x=[storeData['freqs']]), [0], const.SPEC_WIDTH
-    # updatedWaterfall = dict(y=[storeData['times'][::-1]], z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
-    updatedWaterfall = dict(z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
-
-    app.logger.info(f"                           Updated the gui. {index}")
-
-    return updatedSpec, updatedWaterfall
-
-# app.clientside_callback(
-#     """
-#     function (n_intervals, userData) {
-#         const latest_integration = userData['spec'][59]
-#         const current_freqs = userData['freqs']
-#         return [{y: [latest_integration], x: [current_freqs]}, [0], 1000]
-#     }
-#     """,
-#     [
-#         # return [{z: [userData.spec]}, [0], 60]
-#         Output("spec", "extendData"),
-#         # Output("waterfall", "extendData"),
-#     ],
-#     Input("update_gui", "n_intervals"), # output n_intervals, an int
-#     State("userStore", "data"),
-#     prevent_initial_call=True
-# )
 
 server = app.server
 
