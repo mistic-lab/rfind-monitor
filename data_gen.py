@@ -2,7 +2,6 @@ import numpy as np
 import h5py
 import datetime
 from dateutil import tz
-# from scipy.signal import remez, lfilter, square
 
 import const
 
@@ -110,17 +109,18 @@ def write_to_h5(noise_pwr, time):
         n_integrations = np.ceil(time/t_int)
 
         start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - np.arange(n_integrations) * datetime.timedelta(seconds=1)
-        start_times = start_times[::-1]
+
+        start_timestamps=[int(t.timestamp()) for t in start_times[::-1]]
+
 
 
         h5f.create_dataset('spec', (n_integrations, const.NBINS))
         h5f.create_dataset('freqs', data=const.FULL_FREQS)
-        h5f.create_dataset('times', (n_integrations,))
+        h5f.create_dataset('times', data=start_timestamps)
 
         for i, output in enumerate(integrated_spec_gen(noise_pwr, time)):
             print(f"{i+1}/{n_integrations}")
             h5f['spec'][i]=output
-            h5f['times'][i]=start_times[i].timestamp()
 
 
 

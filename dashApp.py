@@ -8,14 +8,15 @@ import numpy as np
 import datetime
 from dateutil import tz
 import pandas as pd
-import zmq
 import h5py
+from brain_plasma import Brain
 
-from dataService import receive_zmq, pull_integration, fetch_integration, reduce_integration
+from data_crunch import fetch_integration, reduce_integration
 import const
 
 
-h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
+# h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
+shared_brain = Brain()
 
 y_range = [20, 60]
 
@@ -147,45 +148,6 @@ app.layout = html.Div(
 )
 
 
-# @app.callback(
-#     Output("userStore", "data"),
-#     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
-#     [
-#         State("spec", "relayoutData"),
-#         State("userStore", "data")
-#     ],
-# )
-# def update_store(index, relayoutData, storeData):#, poller=poller, receiver=consumer_receiver):
-
-#     # try:
-#     app.logger.info("Planning to update store")
-#     latest_integration, timestamp = receive_zmq()
-
-#     if relayoutData and 'xaxis.range[0]' in relayoutData:
-#         f1 = int(relayoutData['xaxis.range[0]'])
-#         f2 = int(relayoutData['xaxis.range[1]'])
-#     else:
-#         f1=const.FULL_FREQS[0]
-#         f2=const.FULL_FREQS[-1]
-
-#     reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
-
-#     storeData['spec'].pop(0)
-#     storeData['spec'].append(reduced_integration)
-
-#     storeData['freqs'] = new_freqs
-
-#     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-#     # storeData['times'].pop(0)
-#     # storeData['times'].append(timestamp)
-#     storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
-
-#     app.logger.info(f"Updated the store! {index}")
-#     return storeData
-
-
-
-
 @app.callback(
     Output("userStore", "data"),
     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
@@ -193,9 +155,16 @@ app.layout = html.Div(
         State("spec", "relayoutData"),
         State("userStore", "data")
     ],
-    prevent_initial_call=True
 )
-def update_store(index, relayoutData, storeData):
+def update_store(index, relayoutData, userStore):
+
+    timestamp = shared_brain['timestamp']
+
+    if userStore['times'][0] == timestamp: # if there is no new data then bail
+        app.logger.info("nothing to see here")
+        raise PreventUpdate
+
+    latest_integration = shared_brain['spec']
 
     if relayoutData and 'xaxis.range[0]' in relayoutData:
         f1 = int(relayoutData['xaxis.range[0]'])
@@ -203,19 +172,55 @@ def update_store(index, relayoutData, storeData):
     else:
         f1=const.FULL_FREQS[0]
         f2=const.FULL_FREQS[-1]
-    
-    newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
 
-    storeData['spec'].pop(0)
-    storeData['spec'].append(newLine)
+    reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
 
-    storeData['freqs'] = freqs
+    userStore['spec'].pop(0)
+    userStore['spec'].append(reduced_integration)
+
+    userStore['freqs'] = new_freqs
 
     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-    storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+    # storeData['times'].pop(0)
+    # storeData['times'].append(timestamp)
+    userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
 
     app.logger.info(f"Updated the store! {index}")
-    return storeData
+    return userStore
+
+
+
+
+# @app.callback(
+#     Output("userStore", "data"),
+#     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
+#     [
+#         State("spec", "relayoutData"),
+#         State("userStore", "data")
+#     ],
+#     prevent_initial_call=True
+# )
+# def update_store(index, relayoutData, storeData):
+
+#     if relayoutData and 'xaxis.range[0]' in relayoutData:
+#         f1 = int(relayoutData['xaxis.range[0]'])
+#         f2 = int(relayoutData['xaxis.range[1]'])
+#     else:
+#         f1=const.FULL_FREQS[0]
+#         f2=const.FULL_FREQS[-1]
+    
+#     newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
+
+#     storeData['spec'].pop(0)
+#     storeData['spec'].append(newLine)
+
+#     storeData['freqs'] = freqs
+
+#     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+#     storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+
+#     app.logger.info(f"Updated the store! {index}")
+#     return storeData
 
 
 

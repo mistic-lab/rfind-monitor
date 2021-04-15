@@ -1,8 +1,4 @@
 import numpy as np
-import zmq
-import zlib
-import pickle
-import time
 
 import const
 
@@ -30,6 +26,7 @@ def bisection(array,value):
         return n-1
     else:
         return jl
+
 
 def fetch_integration(integration, h5FileHandle, f1, f2, length):
     """
@@ -67,53 +64,6 @@ def fetch_integration(integration, h5FileHandle, f1, f2, length):
 
     return spec, freqs, timestamp
 
-def pull_integration(receiver, f1, f2, length):
-
-    index1 = bisection(const.FULL_FREQS, f1)
-    index2 = bisection(const.FULL_FREQS, f2)-1
-
-
-    requested_len = index2-index1+1
-    num_to_bin = int(np.ceil(requested_len/length))
-    even_divisor = int(np.floor(requested_len/num_to_bin))
-    new_length = num_to_bin*even_divisor
-
-    index2 = int(index1+new_length)
-
-    current_freqs = np.linspace(const.FULL_FREQS[index1], const.FULL_FREQS[index2-1], length)
-    reduced_integration = np.empty(length)
-
-    msg = receiver.recv(zmq.NOBLOCK)
-    p = zlib.decompress(msg)
-    data = pickle.loads(p)
-    latest_integration = np.array(data[:-1])
-    timestamp = data[-1]
-    
-    latest_integration = latest_integration[index1:index2]
-    reduced_integration[:even_divisor] = latest_integration.reshape(-1,num_to_bin).max(axis=1)
-    reduced_integration[even_divisor:] = latest_integration[-1]
-
-    return reduced_integration, current_freqs, timestamp
-
-
-
-def create_zmq_socket():
-    context = zmq.Context()
-    zmq_socket_SUB = context.socket(zmq.SUB)
-    zmq_socket_SUB.setsockopt(zmq.SUBSCRIBE, b"")
-    zmq_socket_SUB.connect("tcp://127.0.0.1:5558") 
-
-    return zmq_socket_SUB
-
-def receive_zmq():
-    with create_zmq_socket() as zmq_socket_SUB:
-        msg = zmq_socket_SUB.recv()
-        p = zlib.decompress(msg)
-        data = pickle.loads(p)
-        latest_integration = np.array(data[:-1])
-        timestamp = data[-1]
-        return latest_integration, timestamp
-
 
 def reduce_integration(integration, f1, f2, nbins):
 
@@ -137,5 +87,4 @@ def reduce_integration(integration, f1, f2, nbins):
     reduced_integration[even_divisor:] = integration[-1]
 
     return reduced_integration, current_freqs
-
 
