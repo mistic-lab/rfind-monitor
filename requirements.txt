@@ -1,6 +1,7 @@
 appnope==0.1.2
 backcall==0.2.0
 bokeh==2.3.0
+brain-plasma==0.3.3
 Brotli==1.0.9
 certifi==2020.12.5
 chardet==4.0.0
@@ -50,6 +51,7 @@ plotly==4.14.3
 prompt-toolkit==3.0.17
 psutil==5.8.0
 ptyprocess==0.7.0
+pyarrow==3.0.0
 pyct==0.4.8
 Pygments==2.8.1
 pyparsing==2.4.7

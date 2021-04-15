@@ -41,6 +41,22 @@ Run the app.
 (venv)$ python app.py
 ```
 
+In a separate terminal (sourcing the same venv) run the brain
+
+```bash
+(venv)$  plasma_store -m 1000000000 -s /tmp/plasma
+```
+
+The `-m` flag indicates the number of bytes that the Plasma store can use in memory (the above line is 1 Gb).
+
+In a separate terminal (sourcing the same venv) run the middle man.
+
+```bash
+(venv)$ python middle_man
+```
+
+The middle man handles the zmq binding that has data pushed to it and writes that to the brain.
+
 ## Deployment
 
 1. Spin up CC cloud instance (Ubuntu 20.04) using the [quick start guide](https://docs.computecanada.ca/wiki/Cloud_Quick_Start).
