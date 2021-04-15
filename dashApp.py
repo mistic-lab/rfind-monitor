@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ClientsideFunction
 from dash.exceptions import PreventUpdate
 
 import numpy as np
@@ -220,13 +220,10 @@ def update_store(index, relayoutData, storeData):
 
 
 app.clientside_callback(
-    """
-    function (index, storeData) {
-        const updatedSpec = [{y: [storeData['spec'][59]], x: [storeData['freqs']]}, [0], 1000]
-        const updatedWaterfall = [{z: [storeData['spec']]}, [0], 60]
-        return [updatedSpec, updatedWaterfall]
-    }
-    """,
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_plots'
+    ),
     [
         Output("spec", "extendData"),
         Output("waterfall", "extendData"),

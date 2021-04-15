@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 import datetime
 from dateutil import tz
-from scipy.signal import remez, lfilter, square
+# from scipy.signal import remez, lfilter, square
 
 import const
 
