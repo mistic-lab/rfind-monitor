@@ -6,7 +6,7 @@ FS = 2e9
 
 SPEC_WIDTH = 1000
 
-WATERFALL_HEIGHT = 200
+WATERFALL_HEIGHT = 60
 
 FULL_FREQS = np.linspace(0, FS, NBINS)
 FULL_FREQS.setflags(write=False)

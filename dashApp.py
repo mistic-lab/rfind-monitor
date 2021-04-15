@@ -5,23 +5,26 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
 import numpy as np
+import datetime
+from dateutil import tz
+import pandas as pd
 import zmq
+import h5py
 
-from dataService import pull_integration
+from dataService import receive_zmq, pull_integration, fetch_integration, reduce_integration
 import const
 
 
-context = zmq.Context()
-consumer_receiver = context.socket(zmq.PULL)
-consumer_receiver.bind("tcp://*:5557")
-
-poller = zmq.Poller()
-poller.register(consumer_receiver, zmq.POLLIN)
+h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
 
 y_range = [20, 60]
 
 start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH))
 start_freqs = np.linspace(0, 2e9, const.SPEC_WIDTH)
+#* datetime.datetime.utcnow() is also available
+start_times =  np.arange(const.WATERFALL_HEIGHT) * datetime.timedelta(seconds=1)
+start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - start_times
+start_times = start_times[::-1]
 
 
 
@@ -32,13 +35,14 @@ app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monito
 
 app.layout = html.Div(
     [
-        dcc.Store(id='local', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs}),
-        dcc.Interval(id='check_for_data', interval=500), # ms
+        dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'times': start_times}),
+        dcc.Interval(id='check_for_data', interval=200), # ms
+        dcc.Interval(id='update_gui', interval=2000), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
                     {
-                        'type': 'scatter', #TODO or scattergl?
+                        'type': 'scattergl',
                         'y': start_spec[0],
                         'x': start_freqs,
                         'line': {
@@ -60,7 +64,7 @@ app.layout = html.Div(
                     'yaxis': {
                         'range': y_range,
                         'fixedRange': True,
-                        # 'title': 'dB',
+                        'ticksuffix': ' dB',
                         'ticklabelposition': 'inside',
                         'showticklabels': False,
                         'color': '#a3a7b0',
@@ -71,7 +75,6 @@ app.layout = html.Div(
                         'exponentformat': 'SI',
                         'ticksuffix': 'Hz',
                         'color': '#a3a7b0',
-
                     },
                     'plot_bgcolor': '#23272c',
                     'paper_bgcolor': '#23272c',
@@ -86,8 +89,9 @@ app.layout = html.Div(
             figure={
                 'data': [{
                     'type': 'heatmap',
-                    'z': start_spec,
                     'x': start_freqs,
+                    # 'y': start_times,
+                    'z': start_spec,
                     'colorbar': {
                         'len': 0.5,
                         'x': 0.98,
@@ -98,10 +102,12 @@ app.layout = html.Div(
                         'tickfont': {
                             'color': 'white',
                         },
+                        'ticksuffix': ' dB',
                     },
                     'colorscale': 'Rainbow',
                     'zmin': y_range[0],
                     'zmax': y_range[1],
+                    'hovertemplate': "Freq: %{x} <br />Time: %{y} <br />Power: %{z} dB<extra></extra>"
                 }],
                 'layout': {
                     'width': '100%',
@@ -123,6 +129,10 @@ app.layout = html.Div(
                         'fixedrange': True,
                         'color': '#a3a7b0',
                         'ticks': '',
+                        'showexponent': 'all',
+                        'exponentformat': 'SI',
+                        'ticksuffix': 'Hz',
+                        'color': '#a3a7b0',
                     },
                     'plot_bgcolor': '#23272c',
                     'paper_bgcolor': '#23272c',
@@ -137,52 +147,124 @@ app.layout = html.Div(
 )
 
 
-# Whenever the Interval triggers this runs
 @app.callback(
     [
-        Output("spec", "extendData"),
-        Output("waterfall", "extendData"),
-        Output("local", "data"),
+        Output("userStore", "data"),
     ],
     [
         Input("check_for_data", "n_intervals") # output n_intervals, an int
     ],
     [
         State("spec", "relayoutData"),
-        State("local", "data")
+        State("userStore", "data")
+    ],
+)
+def update_store(index, relayoutData, storeData):#, poller=poller, receiver=consumer_receiver):
+
+    # try:
+    app.logger.info("Planning to update store")
+    latest_integration, timestamp = receive_zmq()
+
+    if relayoutData and 'xaxis.range[0]' in relayoutData:
+        f1 = int(relayoutData['xaxis.range[0]'])
+        f2 = int(relayoutData['xaxis.range[1]'])
+    else:
+        f1=const.FULL_FREQS[0]
+        f2=const.FULL_FREQS[-1]
+
+    reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
+
+    storeData['spec'].pop(0)
+    storeData['spec'].append(reduced_integration)
+
+    storeData['freqs'] = new_freqs
+
+    timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+    # storeData['times'].pop(0)
+    # storeData['times'].append(timestamp)
+    storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+
+    app.logger.info(f"Updated the store! {index}")
+    return [storeData]
+
+
+
+
+# @app.callback(
+#     Output("userStore", "data"),
+    
+#     [
+#         Input("check_for_data", "n_intervals") # output n_intervals, an int
+#     ],
+#     [
+#         State("spec", "relayoutData"),
+#         State("userStore", "data")
+#     ],
+# )
+# def update_store(index, relayoutData, storeData):
+
+#     if relayoutData and 'xaxis.range[0]' in relayoutData:
+#         f1 = int(relayoutData['xaxis.range[0]'])
+#         f2 = int(relayoutData['xaxis.range[1]'])
+#     else:
+#         f1=const.FULL_FREQS[0]
+#         f2=const.FULL_FREQS[-1]
+    
+#     newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
+
+#     storeData['spec'].pop(0)
+#     storeData['spec'].append(newLine)
+
+#     storeData['freqs'] = freqs
+
+#     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+#     storeData['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+
+#     app.logger.info(f"Updated the store! {index}")
+#     return storeData
+
+
+
+@app.callback(
+    [
+        Output("spec", "extendData"),
+        Output("waterfall", "extendData"),
+    ],
+    [
+        Input("update_gui", "n_intervals") # output n_intervals, an int
+    ],
+    [
+        State("userStore", "data")
     ],
     prevent_initial_call=True
 )
-def update_spec(index, relayoutData, storeData, poller=poller, receiver=consumer_receiver):
+def update_gui(index, storeData):
 
-    socks = dict(poller.poll(1)) # This feels wrong. Check for 1ms and if it's not 
-    if not socks:
-        raise PreventUpdate
-    else:
-        if relayoutData and 'xaxis.range[0]' in relayoutData:# and 'xaxis.range[1]' in relayoutData:
-            f1 = int(relayoutData['xaxis.range[0]'])
-            f2 = int(relayoutData['xaxis.range[1]'])
-        else:
-            f1=const.FULL_FREQS[0]
-            f2=const.FULL_FREQS[-1]
-        
-        try:
-            newLine, freqs = pull_integration(receiver, f1, f2, const.SPEC_WIDTH)
+    updatedSpec = dict(y=[storeData['spec'][-1]], x=[storeData['freqs']]), [0], const.SPEC_WIDTH
+    # updatedWaterfall = dict(y=[storeData['times'][::-1]], z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
+    updatedWaterfall = dict(z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
 
-            storeData['spec'].pop(0)
-            storeData['spec'].append(newLine)
-            storeData['freqs'] = freqs
+    app.logger.info(f"                           Updated the gui. {index}")
 
-            updatedSpec = dict(y=[newLine], x=[freqs]), [0], const.SPEC_WIDTH
-            updatedWaterfall = dict(z=[storeData['spec']]), [0], const.WATERFALL_HEIGHT
+    return updatedSpec, updatedWaterfall
 
-
-            return updatedSpec, updatedWaterfall, storeData
-        
-        except zmq.error.Again:
-            raise PreventUpdate
-
-
+# app.clientside_callback(
+#     """
+#     function (n_intervals, userData) {
+#         const latest_integration = userData['spec'][59]
+#         const current_freqs = userData['freqs']
+#         return [{y: [latest_integration], x: [current_freqs]}, [0], 1000]
+#     }
+#     """,
+#     [
+#         # return [{z: [userData.spec]}, [0], 60]
+#         Output("spec", "extendData"),
+#         # Output("waterfall", "extendData"),
+#     ],
+#     Input("update_gui", "n_intervals"), # output n_intervals, an int
+#     State("userStore", "data"),
+#     prevent_initial_call=True
+# )
 
 server = app.server
 
