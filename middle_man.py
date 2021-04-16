@@ -17,30 +17,30 @@ def middleman(rate):
     server_brain = Brain(path='/home/ubuntu/plasma')
 
 
-    # i=1
+    i=1
     while True:
-        # print(f"Iteration {i}")
+        print(f"Iteration {i}")
         socks = dict(poller.poll(rate))
         if socks:
-            # print("- Pulling from SRC")
+            print("- Pulling from SRC")
             msg = zmq_socket_SRC.recv(zmq.NOBLOCK)
-            # print("-- Successfully pulled")
-            # print("- Trying to publish to WEB")
+            print("-- Successfully pulled")
+            print("- Trying to publish to WEB")
             try:
                 p = zlib.decompress(msg)
                 data = pickle.loads(p)
                 server_brain['spec'] = np.array(data[:-1])
                 server_brain['timestamp'] = data[-1]
 
-                # print("-- Successfully added to brain")
+                print("-- Successfully added to brain")
             except zmq.error.Again:
-                # print("-- Failed to publish")
+                print("-- Failed to publish")
                 pass
         else:
-            # print("-- Failed to pull")
+            print("-- Failed to pull")
             pass
         
-        # i+=1
+        i+=1
 
 middleman(400)
 

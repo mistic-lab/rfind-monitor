@@ -162,8 +162,12 @@ def update_store(index, relayoutData, userStore):
     timestamp = shared_brain['timestamp']
 
     if userStore['times'][0] == timestamp: # if there is no new data then bail
-        app.logger.info("nothing to see here")
+        app.logger.info("No new timestamp")
         raise PreventUpdate
+    else:
+        print(f"Old timestamp: {userStore['times'][0]}")
+        print(f"New timestamp: {timestamp}")
+        
 
     latest_integration = shared_brain['spec']
 
