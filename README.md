@@ -44,7 +44,7 @@ Run the app.
 In a separate terminal (sourcing the same venv) run the brain
 
 ```bash
-(venv)$  plasma_store -m 1000000000 -s /tmp/plasma
+(venv)$  plasma_store -m 1000000000 -s /home/ubuntu/plasma
 ```
 
 The `-m` flag indicates the number of bytes that the Plasma store can use in memory (the above line is 1 Gb).
