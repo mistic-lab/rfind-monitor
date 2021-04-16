@@ -14,7 +14,7 @@ def middleman(rate):
     poller = zmq.Poller()
     poller.register(zmq_socket_SRC, zmq.POLLIN)
 
-    server_brain = Brain()
+    server_brain = Brain(path='/home/ubuntu/plasma')
 
 
     # i=1

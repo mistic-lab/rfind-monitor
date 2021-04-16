@@ -16,7 +16,7 @@ import const
 
 
 # h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
-shared_brain = Brain()
+shared_brain = Brain(path='/home/ubuntu/plasma')
 
 y_range = [20, 60]
 
