@@ -165,7 +165,7 @@ def update_store(index, relayoutData, userStore):
         app.logger.info("No new timestamp")
         raise PreventUpdate
     else:
-        print(f"Old timestamp: {userStore['times'][0]}")
+        print(f"Old timestamp: {userStore['times'][0].timestamp()}")
         print(f"New timestamp: {timestamp}")
         
 
