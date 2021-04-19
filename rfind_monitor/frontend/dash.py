@@ -227,11 +227,23 @@ def update_store(index, relayoutData, userStore):
 
 
 
-# app.clientside_callback(
-#     ClientsideFunction(
-#         namespace='clientside',
-#         function_name='update_plots'
-#     ),
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_plots'
+    ),
+    [
+        Output("spec", "extendData"),
+        Output("waterfall", "extendData"),
+    ],
+    [
+        Input("update_gui", "n_intervals"), # output n_intervals, an int
+    ],
+    State("userStore", "data"),
+    prevent_initial_call=True
+)
+
+# @app.callback(
 #     [
 #         Output("spec", "extendData"),
 #         Output("waterfall", "extendData"),
@@ -243,24 +255,11 @@ def update_store(index, relayoutData, userStore):
 #     State("userStore", "data"),
 #     prevent_initial_call=True
 # )
-
-@app.callback(
-    [
-        Output("spec", "extendData"),
-        Output("waterfall", "extendData"),
-    ],
-    [
-        Input("update_gui", "n_intervals"), # output n_intervals, an int
-        # Input("userStore", "data"),
-    ],
-    State("userStore", "data"),
-    prevent_initial_call=True
-)
-def update_plots(index, storeData):
-    app.logger.info(f'Updating plot {index}')
-    updatedSpec = [{'y': [storeData['spec'][const.WATERFALL_HEIGHT-1]], 'x': [storeData['freqs']]}, [0], const.SPEC_WIDTH]
-    updatedWaterfall = [{'z': [storeData['spec']]}, [0], const.WATERFALL_HEIGHT]
-    return [updatedSpec, updatedWaterfall]
+# def update_plots(index, storeData):
+#     app.logger.info(f'Updating plot {index}')
+#     updatedSpec = [{'y': [storeData['spec'][const.WATERFALL_HEIGHT-1]], 'x': [storeData['freqs']]}, [0], const.SPEC_WIDTH]
+#     updatedWaterfall = [{'z': [storeData['spec']]}, [0], const.WATERFALL_HEIGHT]
+#     return [updatedSpec, updatedWaterfall]
 
 server = app.server
 
