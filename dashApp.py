@@ -16,17 +16,16 @@ import const
 
 
 # h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
-shared_brain = Brain(path='/home/ubuntu/plasma')
+shared_brain = Brain(path=const.PLASMA_SOCKET)
 
 y_range = [20, 60]
 
 start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH))
 start_freqs = np.linspace(0, 2e9, const.SPEC_WIDTH)
-#* datetime.datetime.utcnow() is also available
-start_times =  np.arange(const.WATERFALL_HEIGHT) * datetime.timedelta(seconds=1)
-start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - start_times
-start_times = start_times[::-1]
 
+start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - np.arange(const.WATERFALL_HEIGHT) * datetime.timedelta(seconds=1)
+start_timestamps=[int(t.timestamp()) for t in start_times[::-1]]
+del start_times
 
 
 
@@ -37,9 +36,9 @@ app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monito
 
 app.layout = html.Div(
     [
-        dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'times': start_times}),
+        dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'times': start_timestamps}),
         dcc.Interval(id='check_for_data', interval=500), # ms
-        dcc.Interval(id='update_gui', interval=1000), # ms
+        dcc.Interval(id='update_gui', interval=2000), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
@@ -185,10 +184,10 @@ def update_store(index, relayoutData, userStore):
 
     userStore['freqs'] = new_freqs
 
-    timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+    # timestamp = datetime.datetime.fromtimestamp(int(timestamp))
     # storeData['times'].pop(0)
     # storeData['times'].append(timestamp)
-    userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)*datetime.timedelta(seconds=1)
+    userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
 
     app.logger.info(f"Updated the store! {index}")
     return userStore

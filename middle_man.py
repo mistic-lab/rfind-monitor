@@ -3,18 +3,19 @@ import zlib
 from brain_plasma import Brain
 import pickle
 import numpy as np
+import const
 
 # SRC is NRC zmq connection, server_brain is in CC cloud VM memory
 
 def middleman(rate):
     context_SRC = zmq.Context()
     zmq_socket_SRC = context_SRC.socket(zmq.PULL)
-    zmq_socket_SRC.bind("tcp://*:5557")
+    zmq_socket_SRC.bind(const.ZMQ_ADDR)
 
     poller = zmq.Poller()
     poller.register(zmq_socket_SRC, zmq.POLLIN)
 
-    server_brain = Brain(path='/home/ubuntu/plasma')
+    server_brain = Brain(path=const.PLASMA_SOCKET)
 
 
     i=1
