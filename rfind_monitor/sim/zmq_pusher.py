@@ -11,7 +11,7 @@ def producer(verbose=False):
 
     pusher_addr = const.ZMQ_PROTOCOL+"://"+const.ZMQ_IP_PUSH+":"+const.ZMQ_PORT
 
-    source_h5 = '../data.h5'
+    const.SOURCE_H5
 
     context = zmq.Context()
     zmq_socket = context.socket(zmq.PUSH)
@@ -19,8 +19,8 @@ def producer(verbose=False):
 
     if verbose: print(f"Pushing to {pusher_addr}")
 
-    with h5py.File(source_h5,'r') as h5f:
-        if verbose: print(f"Using {source_h5} as file source")
+    with h5py.File(const.SOURCE_H5,'r') as h5f:
+        if verbose: print(f"Using {const.SOURCE_H5} as file source")
 
         modlen = len(h5f['times'])
 

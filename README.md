@@ -1,12 +1,6 @@
-# web-spectra-explorer
+# RFInd Monitor
 
 For deployment skip below to [deployment](#deployment).
-
-## Goal
-
-Pull integrated spectra from endpoint and display spectrum, waterfall plot. Allow to select a playback speed start time. Then smoothly transition bandwidths/etc.
-
-This should all be running as an app and available by hitting some URL in modern browsers.
 
 ## Suggested installation steps
 
@@ -38,6 +32,8 @@ Build the simulation data
 ```bash
 (venv)$ python -m rfind_monitor.sim.data_gen
 ```
+
+> To use the local zmq simulation, move the new `data.h5` file into `/rfind_monitor/sim/`.
 
 Run the app.
 
@@ -98,7 +94,7 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 8. Create a file `/etc/apache2/sites-available/dash.conf` that contains
 
    ```bash
-   WSGIDaemonProcess dash user=ubuntu group=ubuntu home=/home/ubuntu threads=5
+   WSGIDaemonProcess dash user=ubuntu group=ubuntu home=/home/ubuntu threads=5 socket-user=#33
    WSGIScriptAlias /live /home/ubuntu/public_html/wsgi/dash.wsgi
 
    WSGIProcessGroup dash

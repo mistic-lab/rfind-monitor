@@ -3,5 +3,5 @@ ZMQ_PORT = '5557'
 ZMQ_IP = '*'
 ZMQ_ADDR = ZMQ_PROTOCOL+'://'+ZMQ_IP+':'+ZMQ_PORT
 
-PLASMA_SOCKET='/tmp/plasma'
+PLASMA_SOCKET='/home/ubuntu/plasma'
 PLASMA_SIZE_BYTES=1000000000 # 1 GB
