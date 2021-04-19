@@ -45,5 +45,6 @@ def middleman(rate, verbose=False):
         
         i+=1
 
-middleman(10, verbose=True)
+if __name__ == "__main__":
+    middleman(400, verbose=True)
 
