@@ -3,7 +3,7 @@ import h5py
 import datetime
 from dateutil import tz
 
-import const
+import rfind_monitor.const as const
 
 
 ##* What to simulate
@@ -123,6 +123,6 @@ def write_to_h5(noise_pwr, time):
             h5f['spec'][i]=output
 
 
-
-write_to_h5(1, 0.1)
+if __name__ == "__main__":
+    write_to_h5(1, 0.1)
 

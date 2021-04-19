@@ -11,8 +11,8 @@ import pandas as pd
 import h5py
 from brain_plasma import Brain
 
-from data_crunch import fetch_integration, reduce_integration
-import const
+from rfind_monitor.frontend.crunch import fetch_integration, reduce_integration
+import rfind_monitor.const as const
 
 
 # h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
@@ -30,8 +30,7 @@ del start_times
 
 
 
-app = dash.Dash(__name__, requests_pathname_prefix='/live/', title='RFInd Monitor', update_title=None)
-# app = dash.Dash(__name__, title='RFInd Monitor', update_title=None)
+app = dash.Dash(__name__, requests_pathname_prefix=const.DASH_PREFIX, title='RFInd Monitor', update_title=None)
 
 
 app.layout = html.Div(

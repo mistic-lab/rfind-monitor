@@ -8,7 +8,7 @@ Pull integrated spectra from endpoint and display spectrum, waterfall plot. Allo
 
 This should all be running as an app and available by hitting some URL in modern browsers.
 
-## Getting started
+## Suggested installation steps
 
 Setup a venv and source it
 
@@ -23,36 +23,44 @@ update pip
 (venv)$ pip install --upgrade pip
 ```
 
-Install requirements using the included [requirements.txt](./requirements.txt) file
+Install this package and it's requirements with
 
 ```bash
-(venv)$ pip install -r requirements.txt
+(venv)$ pip install .
 ```
+
+> Add a `-e` flag to make it editable if you're changing the code or regularly updating the repo
+
+## Test the app with simulated data
 
 Build the simulation data
 
 ```bash
-(venv)$ python dataGenerator.py
+(venv)$ python -m rfind_monitor.sim.data_gen
 ```
 
 Run the app.
 
 ```bash
-(venv)$ python app.py
+(venv)$ python -m rfind_monitor.frontend.dash
 ```
 
 In a separate terminal (sourcing the same venv) run the brain
 
 ```bash
-(venv)$  plasma_store -m 1000000000 -s /home/ubuntu/plasma
+(venv)$  python -m rfind_monitor.backend.plasma_store
 ```
-
-The `-m` flag indicates the number of bytes that the Plasma store can use in memory (the above line is 1 Gb).
 
 In a separate terminal (sourcing the same venv) run the middle man.
 
 ```bash
-(venv)$ python middle_man
+(venv)$ python -m rfind_monitor.backend.middle_man
+```
+
+In a separate terminal (sourcing the same venv) run the data server
+
+```bash
+(venv)$ python -m rfind_monitor.sim.zmq_pusher
 ```
 
 The middle man handles the zmq binding that has data pushed to it and writes that to the brain.
@@ -67,16 +75,15 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 
 4. Install apache2 and wsgi with `sudo apt install apache2 libapache2-mod-wsgi-py3 python3-venv` (which we'll use to serve both the application and the data)
 
-5. Clone this repo into `/home/ubuntu/` then install the venv and build the simulation dataset as described [above](#getting-started). You may want to take a look in [dataService.py](./dataService.py) and see how large a dataset is going to be generated. The current default is ~40 GB.
+5. Clone this repo into `/home/ubuntu/` then install the venv and this package as described [above](#getting-started).
 
-6. Make a folder in the home directory to host the server then move the simulated data into it
+6. Make a folder in the home directory to host the server
 
    ```bash
     cd
     mkdir public_html
     mkdir public_html/data
     mkdir public_html/wsgi
-    mv web-spectra-explorer/data.h5 public_html/data/
     ```
 
 7. Create a file `public_html/wsgi/dash.wsgi` that contains
@@ -84,18 +91,17 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
    ```python
    #!/usr/bin/python3
    import sys
-   sys.path.insert(0, "/home/ubuntu/web-spectra-explorer/venv/lib/python3.8/site-packages")
-   sys.path.insert(0,"/home/ubuntu/web-spectra-explorer/")
-   from dashApp import server as application
+   sys.path.insert(0, "/home/ubuntu/rfind-monitor/venv/lib/python3.8/site-packages")
+   from rfind_monitor.frontend.dash import server as application
    ```
 
 8. Create a file `/etc/apache2/sites-available/dash.conf` that contains
 
    ```bash
-   WSGIDaemonProcess dashApp user=ubuntu group=ubuntu home=/home/ubuntu threads=5
+   WSGIDaemonProcess dash user=ubuntu group=ubuntu home=/home/ubuntu threads=5
    WSGIScriptAlias /live /home/ubuntu/public_html/wsgi/dash.wsgi
 
-   WSGIProcessGroup dashApp
+   WSGIProcessGroup dash
    WSGIApplicationGroup %{GLOBAL}
    ```
 
