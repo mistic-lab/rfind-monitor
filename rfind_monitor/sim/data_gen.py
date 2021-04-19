@@ -3,7 +3,7 @@ import h5py
 import datetime
 from dateutil import tz
 
-import const
+import rfind_monitor.const as const
 
 
 ##* What to simulate

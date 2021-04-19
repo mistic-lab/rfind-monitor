@@ -1,6 +1,6 @@
 import numpy as np
 
-import const
+import rfind_monitor.const as const
 
 def bisection(array,value):
     '''Given an ``array`` , and given a ``value`` , returns an index j such that ``value`` is between array[j]
