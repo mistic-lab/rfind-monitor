@@ -11,7 +11,7 @@ def producer(verbose=False):
 
     pusher_addr = const.ZMQ_PROTOCOL+"://"+const.ZMQ_IP_PUSH+":"+const.ZMQ_PORT
 
-    source_h5 = '/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5'
+    source_h5 = '../data.h5'
 
     context = zmq.Context()
     zmq_socket = context.socket(zmq.PUSH)

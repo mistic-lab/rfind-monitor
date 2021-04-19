@@ -91,8 +91,7 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
    ```python
    #!/usr/bin/python3
    import sys
-   sys.path.insert(0, "/home/ubuntu/web-spectra-explorer/venv/lib/python3.8/site-packages")
-   sys.path.insert(0,"/home/ubuntu/web-spectra-explorer/")
+   sys.path.insert(0, "/home/ubuntu/rfind-monitor/venv/lib/python3.8/site-packages")
    from rfind_monitor.frontend.dash import server as application
    ```
 
