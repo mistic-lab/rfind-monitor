@@ -164,8 +164,8 @@ def update_store(index, relayoutData, userStore):
         app.logger.info("No new timestamp")
         raise PreventUpdate
     else:
-        print(f"Old timestamp: {userStore['times'][0].timestamp()}")
-        print(f"New timestamp: {timestamp}")
+        app.logger.info("New timestamp")
+        app.logger.info(f"-- diff: {timestamp-userStore['times'][0]} seconds")
         
 
     latest_integration = shared_brain['spec']
@@ -189,7 +189,7 @@ def update_store(index, relayoutData, userStore):
     # storeData['times'].append(timestamp)
     userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
 
-    app.logger.info(f"Updated the store! {index}")
+    app.logger.info(f"-- updated the store {index}")
     return userStore
 
 
