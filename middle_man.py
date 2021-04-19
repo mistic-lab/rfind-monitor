@@ -43,5 +43,5 @@ def middleman(rate):
         
         i+=1
 
-middleman(500)
+middleman(10)
 
