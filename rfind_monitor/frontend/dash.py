@@ -23,9 +23,9 @@ y_range = [20, 60]
 start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH))
 start_freqs = np.linspace(0, 2e9, const.SPEC_WIDTH)
 
-start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - np.arange(const.WATERFALL_HEIGHT) * datetime.timedelta(seconds=1)
-start_timestamps=[int(t.timestamp()) for t in start_times[::-1]]
-del start_times
+# start_times = datetime.datetime.now(tz=tz.tzstr('America/Vancouver')) - np.arange(const.WATERFALL_HEIGHT) * datetime.timedelta(seconds=1)
+# start_timestamps=[int(t.timestamp()) for t in start_times[::-1]]
+# del start_times
 
 
 
@@ -35,9 +35,9 @@ app = dash.Dash(__name__, requests_pathname_prefix=const.DASH_PREFIX, title='RFI
 
 app.layout = html.Div(
     [
-        dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'times': start_timestamps}),
+        dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}),
         dcc.Interval(id='check_for_data', interval=500), # ms
-        dcc.Interval(id='update_gui', interval=2000), # ms
+        dcc.Interval(id='update_gui', interval=1000), # ms
         dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
             figure={
                 'data': [
@@ -160,7 +160,7 @@ def update_store(index, relayoutData, userStore):
     if 'timestamp' not in shared_brain.names() or shared_brain['timestamp'] == userStore['times'][0]:
         raise PreventUpdate
     else:
-        timestamp = shared_brain['timestamp']
+        timestamp_server = shared_brain['timestamp']
 
         latest_integration = shared_brain['spec']
 
@@ -178,9 +178,9 @@ def update_store(index, relayoutData, userStore):
 
         userStore['freqs'] = new_freqs
 
-        userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
+        userStore['timestamp'] = timestamp_server
 
-        app.logger.info(f"Updated the store with timestamp {timestamp}")
+        app.logger.info(f"Updated the store with timestamp {userStore['timestamp']}")
         return userStore
 
 
@@ -238,7 +238,7 @@ app.clientside_callback(
     """
     function (index, storeData) {
         if (index !== undefined) {
-            console.log("Updating plot from timestamp "+storeData.times[0])
+            console.log("Updating plot from timestamp "+storeData.timestamp)
             const updatedSpec = [{y: [storeData.spec[storeData.spec.length-1]], x: [storeData.freqs]}, [0], storeData.freqs.length]
             const updatedWaterfall = [{z: [storeData.spec]}, [0], storeData.spec.length]
             return [updatedSpec, updatedWaterfall];
