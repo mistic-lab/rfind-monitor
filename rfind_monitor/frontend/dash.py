@@ -15,7 +15,7 @@ from rfind_monitor.frontend.crunch import fetch_integration, reduce_integration
 import rfind_monitor.const as const
 
 
-h5f = h5py.File('/Users/nsbruce/Documents/RFI/web-spectra-explorer/data.h5','r')
+h5f = h5py.File(const.SOURCE_H5,'r')
 # shared_brain = Brain(path=const.PLASMA_SOCKET)
 
 y_range = [20, 60]
