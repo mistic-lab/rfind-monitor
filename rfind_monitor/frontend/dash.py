@@ -157,36 +157,31 @@ app.layout = html.Div(
 )
 def update_store(index, relayoutData, userStore):
 
-    timestamp = shared_brain['timestamp']
-
-    if userStore['times'][0] == timestamp: # if there is no new data then bail
-        app.logger.info("No new timestamp")
+    if 'timestamp' not in shared_brain.names() or shared_brain['timestamp'] == userStore['times'][0]:
         raise PreventUpdate
     else:
-        app.logger.info("New timestamp")
-        app.logger.info(f"-- diff: {timestamp-userStore['times'][0]} seconds")
-        
+        timestamp = shared_brain['timestamp']
 
-    latest_integration = shared_brain['spec']
+        latest_integration = shared_brain['spec']
 
-    if relayoutData and 'xaxis.range[0]' in relayoutData:
-        f1 = int(relayoutData['xaxis.range[0]'])
-        f2 = int(relayoutData['xaxis.range[1]'])
-    else:
-        f1=const.FULL_FREQS[0]
-        f2=const.FULL_FREQS[-1]
+        if relayoutData and 'xaxis.range[0]' in relayoutData:
+            f1 = int(relayoutData['xaxis.range[0]'])
+            f2 = int(relayoutData['xaxis.range[1]'])
+        else:
+            f1=const.FULL_FREQS[0]
+            f2=const.FULL_FREQS[-1]
 
-    reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
+        reduced_integration, new_freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
 
-    userStore['spec'].pop(0)
-    userStore['spec'].append(reduced_integration)
+        userStore['spec'].pop(0)
+        userStore['spec'].append(reduced_integration)
 
-    userStore['freqs'] = new_freqs
+        userStore['freqs'] = new_freqs
 
-    userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
+        userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
 
-    app.logger.info(f"-- updated the store with timestamp {timestamp}")
-    return userStore
+        app.logger.info(f"Updated the store with timestamp {timestamp}")
+        return userStore
 
 
 
