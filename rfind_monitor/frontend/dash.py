@@ -147,14 +147,14 @@ app.layout = html.Div(
 )
 
 
-@app.callback(
-    Output("userStore", "data"),
-    [Input("check_for_data", "n_intervals")], # output n_intervals, an int
-    [
-        State("spec", "relayoutData"),
-        State("userStore", "data")
-    ],
-)
+# @app.callback(
+#     Output("userStore", "data"),
+#     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
+#     [
+#         State("spec", "relayoutData"),
+#         State("userStore", "data")
+#     ],
+# )
 # def update_store(index, relayoutData, userStore):
 
 #     if 'timestamp' not in shared_brain.names() or shared_brain['timestamp'] == userStore['times'][0]:
