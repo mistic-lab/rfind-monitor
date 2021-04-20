@@ -21,26 +21,26 @@ def middleman(rate, verbose=False):
 
     i=1
     while True:
-        if verbose: print(f"Iteration {i}")
+        # if verbose: print(f"Iteration {i}")
         socks = dict(poller.poll(rate))
         if socks:
             if verbose: print("- Pulling from SRC")
             msg = zmq_socket_SRC.recv(zmq.NOBLOCK)
             if verbose: print("-- Successfully pulled")
-            if verbose: print("- Trying to publish to WEB")
+            # if verbose: print("- Trying to publish to WEB")
             try:
                 p = zlib.decompress(msg)
                 data = pickle.loads(p)
                 server_brain['spec'] = np.array(data[:-1])
                 server_brain['timestamp'] = data[-1]
 
-                if verbose: print("-- Successfully added to brain")
+                if verbose: print(f"-- Successfully added timestamp {data[-1]} to brain")
 
             except zmq.error.Again:
-                if verbose: print("-- Failed to publish")
+                # if verbose: print("-- Failed to publish")
                 pass
         else:
-            if verbose: print("-- Failed to pull")
+            # if verbose: print("-- Failed to pull")
             pass
         
         i+=1

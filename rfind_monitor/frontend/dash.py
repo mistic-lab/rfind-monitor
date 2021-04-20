@@ -160,7 +160,6 @@ def update_store(index, relayoutData, userStore):
     if ('timestamp' not in shared_brain.names()) or (shared_brain['timestamp'] == userStore['timestamp']):
         raise PreventUpdate
     else:
-        timestamp_server = shared_brain['timestamp']
 
         latest_integration = shared_brain['spec']
 
@@ -178,7 +177,7 @@ def update_store(index, relayoutData, userStore):
 
         userStore['freqs'] = new_freqs
 
-        userStore['timestamp'] = timestamp_server
+        userStore['timestamp'] = shared_brain['timestamp']
 
         app.logger.info(f"Updated the store with timestamp {userStore['timestamp']}")
         return userStore
