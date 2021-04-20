@@ -224,11 +224,35 @@ def update_store(index, relayoutData, userStore):
 
 
 
+# app.clientside_callback(
+#     ClientsideFunction(
+#         namespace='clientside',
+#         function_name='update_plots'
+#     ),
+#     [
+#         Output("spec", "extendData"),
+#         Output("waterfall", "extendData"),
+#     ],
+#     [
+#         Input("update_gui", "n_intervals"), # output n_intervals, an int
+#     ],
+#     State("userStore", "data"),
+#     prevent_initial_call=True
+# )
+
 app.clientside_callback(
-    ClientsideFunction(
-        namespace='clientside',
-        function_name='update_plots'
-    ),
+    """
+    function (index, storeData) {
+        if (index !== undefined) {
+            console.log("Updating plot from timestamp "+storeData.times[0])
+            const updatedSpec = [{y: [storeData.spec[storeData.spec.length-1]], x: [storeData.freqs]}, [0], storeData.freqs.length]
+            const updatedWaterfall = [{z: [storeData.spec]}, [0], storeData.spec.length]
+            return [updatedSpec, updatedWaterfall];
+        } else {
+            throw window.dash_clientside.PreventUpdate;
+        }
+    }
+    """,
     [
         Output("spec", "extendData"),
         Output("waterfall", "extendData"),
