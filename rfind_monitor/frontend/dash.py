@@ -157,7 +157,7 @@ app.layout = html.Div(
 )
 def update_store(index, relayoutData, userStore):
 
-    if 'timestamp' not in shared_brain.names() or shared_brain['timestamp'] == userStore['times'][0]:
+    if 'timestamp' not in shared_brain.names() or shared_brain['timestamp'] == userStore['timestamp']:
         raise PreventUpdate
     else:
         timestamp_server = shared_brain['timestamp']
