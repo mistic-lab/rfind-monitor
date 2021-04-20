@@ -183,12 +183,9 @@ def update_store(index, relayoutData, userStore):
 
     userStore['freqs'] = new_freqs
 
-    # timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-    # storeData['times'].pop(0)
-    # storeData['times'].append(timestamp)
     userStore['times'] = timestamp-np.arange(const.WATERFALL_HEIGHT)#*datetime.timedelta(seconds=1)
 
-    app.logger.info(f"-- updated the store {index}")
+    app.logger.info(f"-- updated the store with timestamp {timestamp}")
     return userStore
 
 
