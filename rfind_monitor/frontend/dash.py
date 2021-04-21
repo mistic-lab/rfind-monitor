@@ -2,16 +2,22 @@ from rfind_monitor.utils.hashing import name_to_hash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.exceptions import PreventUpdate
-from dash_extensions.enrich import ServersideOutput, Trigger, Dash, Input, Output, State
+from dash_extensions.enrich import ServersideOutput, ServersideOutputTransform, Trigger, TriggerTransform, DashProxy, Dash, Input, Output, State
 
 import numpy as np
-import h5py
+# import h5py
+# from brain_plasma import Brain
+# import pyarrow as pa
+import redis
 
 from rfind_monitor.frontend.crunch import fetch_integration, reduce_integration
 import rfind_monitor.const as const
+from rfind_monitor.utils.redis import numpy_from_Redis
 
 
-h5f = h5py.File(const.SOURCE_H5,'r')
+# h5f = h5py.File(const.SOURCE_H5,'r')
+# brain=Brain(path=const.PLASMA_SOCKET)
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 y_range = [20, 60]
 
@@ -26,7 +32,7 @@ app = Dash(
     title='RFInd Monitor',
     update_title=None,
     prevent_initial_callbacks=True,
-    assets_folder=const.ASSETS_DIR
+    # assets_folder=const.ASSETS_DIR+'/',
 )
 
 def serve_layout():
@@ -148,17 +154,64 @@ def serve_layout():
 app.layout = serve_layout
 
 
+# @app.callback(
+#     ServersideOutput("userStore","data"),
+#     [Input("check_for_data","n_intervals")],
+#     [
+#         State("spec", "relayoutData"),
+#         State("userStore", "data")
+#     ],
+#     prevent_initial_call=True
+# )
+# def update_store(index, relayoutData, userStore):
+#     existing_store = userStore
+
+#     if existing_store==None:
+#         existing_store = {'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}
+
+#     if relayoutData and 'xaxis.range[0]' in relayoutData:
+#         f1 = int(relayoutData['xaxis.range[0]'])
+#         f2 = int(relayoutData['xaxis.range[1]'])
+#     else:
+#         f1=const.FULL_FREQS[0]
+#         f2=const.FULL_FREQS[-1]
+    
+#     old_timestamp = existing_store['timestamp']
+    
+#     newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
+
+#     if timestamp == old_timestamp:
+#         raise PreventUpdate
+#     else:
+
+#         spec = np.roll(existing_store['spec'],-1,0)
+#         spec[-1] = newLine
+
+#         existing_store['spec'] = spec
+#         existing_store['freqs'] = freqs
+#         existing_store['timestamp'] = timestamp
+
+#         return existing_store
+
+
+
+
 @app.callback(
     ServersideOutput("userStore","data"),
-    [Input("check_for_data","n_intervals")],
+    [Trigger("check_for_data","n_intervals")],
     [
         State("spec", "relayoutData"),
         State("userStore", "data")
     ],
     prevent_initial_call=True
 )
-def update_store(index, relayoutData, userStore):
+def update_store(relayoutData, userStore):
     existing_store = userStore
+
+    # latest_integration = brain['spec'].to_numpy()
+    latest_integration = numpy_from_Redis(redis_client,'spec')
+    latest_timestamp = redis_client.get('timestamp')
+    # latest_timestamp = brain['timestamp']
 
     if existing_store==None:
         existing_store = {'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}
@@ -171,68 +224,22 @@ def update_store(index, relayoutData, userStore):
         f2=const.FULL_FREQS[-1]
     
     old_timestamp = existing_store['timestamp']
-    
-    newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
 
-    if timestamp == old_timestamp:
+    if old_timestamp == latest_timestamp:
         raise PreventUpdate
+    
     else:
+        newLine, freqs = reduce_integration(latest_integration, f1, f2, const.SPEC_WIDTH)
+
 
         spec = np.roll(existing_store['spec'],-1,0)
         spec[-1] = newLine
 
         existing_store['spec'] = spec
         existing_store['freqs'] = freqs
-        existing_store['timestamp'] = timestamp
+        existing_store['timestamp'] = latest_timestamp
 
         return existing_store
-
-
-
-
-# @app.callback(
-#     Output("userStore", "data"),
-#     [Input("check_for_data", "n_intervals")], # output n_intervals, an int
-#     [
-#         State("spec", "relayoutData"),
-#         State("userStore", "data")
-#     ],
-#     prevent_initial_call=True
-# )
-# def update_store(index, relayoutData, userStore):
-
-#     if relayoutData and 'xaxis.range[0]' in relayoutData:
-#         f1 = int(relayoutData['xaxis.range[0]'])
-#         f2 = int(relayoutData['xaxis.range[1]'])
-#     else:
-#         f1=const.FULL_FREQS[0]
-#         f2=const.FULL_FREQS[-1]
-    
-#     old_timestamp = int(userStore['timestamp'])
-    
-#     newLine, freqs, timestamp = fetch_integration(index, h5f, f1, f2, const.SPEC_WIDTH)
-
-#     app.logger.info(f"Old timestamp: {int(old_timestamp)} : {type(old_timestamp)}")
-#     app.logger.info(f"New timestamp: {int(timestamp)} : {type(timestamp)}")
-#     app.logger.info(f"They're the same: {timestamp == old_timestamp}\n")
-
-#     if timestamp == old_timestamp:
-#         app.logger.info("Preventing updating")
-#         raise PreventUpdate
-#     else:
-
-#         newSpec = userStore['spec']
-#         newSpec.pop(0)
-#         newSpec.append(newLine)
-
-#         # userStore['spec'].pop(0)
-#         # userStore['spec'].append(newLine)
-
-#         # userStore['freqs'] = freqs
-
-#         # userStore['timestamp'] = timestamp
-
-#         return {'spec': newSpec, 'freqs': freqs, 'timestamp': timestamp}
 
 
 

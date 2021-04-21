@@ -25,7 +25,18 @@ Install this package and it's requirements with
 
 > Add a `-e` flag to make it editable if you're changing the code or regularly updating the repo
 
-## Test the app with simulated data
+### Install Redis
+
+```
+wget http://download.redis.io/redis-stable.tar.gz
+tar xvzf redis-stable.tar.gz
+cd redis-stable
+make
+make test
+sudo make install
+```
+
+### Test the app with simulated data
 
 Build the simulation data
 
@@ -41,10 +52,16 @@ Run the app.
 (venv)$ python -m rfind_monitor.frontend.dash
 ```
 
-In a separate terminal (sourcing the same venv) run the brain
+<!-- In a separate terminal (sourcing the same venv) run the brain
 
 ```bash
 (venv)$  python -m rfind_monitor.backend.plasma_store
+``` -->
+
+In a separate terminal (sourcing the same venv) run the Redis server
+
+```
+(venv)$ python -m rfind_monitor.backend.redis_store
 ```
 
 In a separate terminal (sourcing the same venv) run the middle man.
@@ -59,7 +76,7 @@ In a separate terminal (sourcing the same venv) run the data server
 (venv)$ python -m rfind_monitor.sim.zmq_pusher
 ```
 
-The middle man handles the zmq binding that has data pushed to it and writes that to the brain.
+The middle man handles the zmq binding that has data pushed to it and writes that to the Redis storage.
 
 ## Deployment
 
