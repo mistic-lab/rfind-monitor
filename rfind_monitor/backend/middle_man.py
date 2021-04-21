@@ -1,10 +1,13 @@
+from pyarrow.plasma import start_plasma_store
 import zmq
 import zlib
 from brain_plasma import Brain
+# import pyarrow.plasma as plasma
 import pickle
 import numpy as np
 
 import rfind_monitor.const as const
+from rfind_monitor.utils.hashing import name_to_hash
 
 # SRC is NRC zmq connection, server_brain is in CC cloud VM memory
 
@@ -17,6 +20,9 @@ def middleman(rate, verbose=False):
     poller.register(zmq_socket_SRC, zmq.POLLIN)
 
     server_brain = Brain(path=const.PLASMA_SOCKET)
+    # brain = plasma.connect(const.PLASMA_SOCKET)
+    # spec_id = name_to_hash('spec')
+    # timestamp_id = name_to_hash('timestamp')
 
 
     i=1
@@ -24,17 +30,21 @@ def middleman(rate, verbose=False):
         # if verbose: print(f"Iteration {i}")
         socks = dict(poller.poll(rate))
         if socks:
-            if verbose: print("- Pulling from SRC")
+            # if verbose: print("- Pulling from SRC")
             msg = zmq_socket_SRC.recv(zmq.NOBLOCK)
-            if verbose: print("-- Successfully pulled")
+            # if verbose: print("-- Successfully pulled")
             # if verbose: print("- Trying to publish to WEB")
             try:
                 p = zlib.decompress(msg)
                 data = pickle.loads(p)
-                server_brain['spec'] = np.array(data[:-1])
+                if verbose: print(f"Trying to write {data[-1]} to brain")
+                server_brain['spec'] = data[:-1]
                 server_brain['timestamp'] = data[-1]
 
-                if verbose: print(f"-- Successfully added timestamp {data[-1]} to brain")
+                if verbose: print(f" Brain contains {server_brain['timestamp']}\n")
+                # spec_id = brain.put(data[:-1])
+                # timestamp_id = brain.put(data[-1])
+                # if verbose: print(f" Brain contains {brain.get(timestamp_id)}\n")
 
             except zmq.error.Again:
                 # if verbose: print("-- Failed to publish")
@@ -46,5 +56,5 @@ def middleman(rate, verbose=False):
         i+=1
 
 if __name__ == "__main__":
-    middleman(400, verbose=True)
+    middleman(const.MIDDLE_MAN_RATE, verbose=True)
 

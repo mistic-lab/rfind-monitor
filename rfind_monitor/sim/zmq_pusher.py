@@ -38,7 +38,7 @@ def producer(verbose=False):
             except zmq.error.Again:
                 if verbose: print("-- Failed")
             i+=1
-            time.sleep(1)
+            time.sleep(const.INTEGRATION_RATE/1000)
 
 
 producer(verbose=True)
