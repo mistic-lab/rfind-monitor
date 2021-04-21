@@ -27,7 +27,7 @@ Install this package and it's requirements with
 
 ### Install Redis
 
-```
+```bash
 wget http://download.redis.io/redis-stable.tar.gz
 tar xvzf redis-stable.tar.gz
 cd redis-stable
