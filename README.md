@@ -52,12 +52,6 @@ Run the app.
 (venv)$ python -m rfind_monitor.frontend.dash
 ```
 
-<!-- In a separate terminal (sourcing the same venv) run the brain
-
-```bash
-(venv)$  python -m rfind_monitor.backend.plasma_store
-``` -->
-
 In a separate terminal (sourcing the same venv) run the Redis server
 
 ```
@@ -88,7 +82,7 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 
 4. Install apache2 and wsgi with `sudo apt install apache2 libapache2-mod-wsgi-py3 python3-venv` (which we'll use to serve both the application and the data)
 
-5. Clone this repo into `/home/ubuntu/` then install the venv and this package as described [above](#getting-started).
+5. Clone this repo into `/home/ubuntu/` then install the venv and this package as described [above](#suggested-installation-steps).
 
 6. Make a folder in the home directory to host the server
 
@@ -128,6 +122,8 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 11. Enable the new wsgi site using `sudo /usr/sbin/a2ensite dash.conf`
 
 12. Restart the apache server with `sudo systemctl reload apache2`.
+
+13. Start the redis server and middle_man zmq processes with `supervisord` (the venv must be active and you must be in the rfind_monitor root directory)
 
 ## Refs
 

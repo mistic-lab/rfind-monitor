@@ -133,3 +133,4 @@ dmypy.json
 *.h5
 *.hdf5
 file_system_store/
+*.rdb
