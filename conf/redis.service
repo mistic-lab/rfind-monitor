@@ -1,0 +1,11 @@
+[Unit]
+Description=Redis
+After=syslog.target
+
+[Service]
+ExecStart=/usr/local/bin/redis-server /home/ubuntu/rfind-monitor/conf/redis.conf
+RestartSec=5s
+Restart=on-success
+
+[Install]
+WantedBy=multi-user.target

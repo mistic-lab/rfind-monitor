@@ -82,7 +82,7 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 
 4. Install apache2 and wsgi with `sudo apt install apache2 libapache2-mod-wsgi-py3 python3-venv` (which we'll use to serve both the application and the data)
 
-5. Clone this repo into `/home/ubuntu/` then install the venv and this package as described [above](#suggested-installation-steps).
+5. Clone this repo into `/home/ubuntu/` then install the venv and this package as described [above](#suggested-installation-steps). Make sure to install redis as well as decribed above.
 
 6. Make a folder in the home directory to host the server
 
@@ -123,7 +123,17 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 
 12. Restart the apache server with `sudo systemctl reload apache2`.
 
-13. Start the redis server and middle_man zmq processes with `supervisord` (the venv must be active and you must be in the rfind_monitor root directory)
+13. Move the redis service file into it's location and start the service.
+
+```bash
+sudo cp /home/ubuntu/rfind-monitor/conf/redis.service /etc/systemd/system/redis.service
+sudo systemctl enable /etc/systemd/system/redis.service
+sudo systemctl start redis.service
+```
+
+There are also a few lines you need to add to the `redis.conf` file - ask Nick for details.
+
+14. Start the redis server and middle_man zmq processes with `supervisord` (the venv must be active and you must be in the rfind_monitor root directory)
 
 ## Refs
 

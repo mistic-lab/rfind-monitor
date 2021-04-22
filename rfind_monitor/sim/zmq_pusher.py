@@ -26,7 +26,7 @@ def producer(verbose=False):
             try:
                 redis_client.set('latest',msg)
                 if verbose: print("-- Succeeded")
-            except redis.exceptions.ConnectionError as e:
+            except Exception as e:
                 if verbose: print(f"-- Failed: {e}")
             time.sleep(const.INTEGRATION_RATE/1000)
             i+=1
