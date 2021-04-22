@@ -1,0 +1,12 @@
+[Unit]
+Description=RFInd Middle Man
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/home/ubuntu/rfind-monitor/venv/bin/python3 /home/ubuntu/rfind-monitor/venv/lib/python3.8/site-packages/rfind_monitor/backend/middle_man.py
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target

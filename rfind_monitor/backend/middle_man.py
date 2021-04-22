@@ -24,40 +24,25 @@ def middleman(rate, verbose=False):
     poller = zmq.Poller()
     poller.register(zmq_socket_SRC, zmq.POLLIN)
 
-    # server_brain = Brain(path=const.PLASMA_SOCKET)
-    redis_client = redis.Redis(host='localhost', port=6379, db=0)
-    # brain = plasma.connect(const.PLASMA_SOCKET)
-    # spec_id = name_to_hash('spec')
-    # timestamp_id = name_to_hash('timestamp')
+    redis_client = redis.Redis(host=const.REDIS_IP, port=const.REDIS_PORT, db=0)
 
 
 
 
     i=1
     while True:
-        # if verbose: print(f"Iteration {i}")
         socks = dict(poller.poll(rate))
         if socks:
-            # if verbose: print("- Pulling from SRC")
             msg = zmq_socket_SRC.recv(zmq.NOBLOCK)
-            # if verbose: print("-- Successfully pulled")
-            # if verbose: print("- Trying to publish to WEB")
             try:
-                # p = zlib.decompress(msg)
-                # data = pickle.loads(p)
-
-                # if verbose: print(f"Trying to write {data[-1]} to redis")
-                # numpy_to_Redis(redis_client, np.array(data[:-1]), 'spec')
-                # redis_client.set('timestamp',int(data[-1]))
                 redis_client.set('latest', msg)
-                if verbose: print(f"Passed data from zmq to redis")
+                if verbose: print(f"Passed data from zmq to redis {i}")
 
 
-            except zmq.error.Again:
-                # if verbose: print("-- Failed to publish")
+            except Exception as e:
+                if verbose: print(f"-- Failed to send {e}")
                 pass
         else:
-            # if verbose: print("-- Failed to pull")
             pass
         
         i+=1

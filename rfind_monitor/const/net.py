@@ -1,8 +1,8 @@
-REDIS_CONF = '/home/ubuntu/rfind-monitor/redis.conf'
+REDIS_CONF = '/home/ubuntu/rfind-monitor/conf/redis.conf'
 REDIS_PORT = 6379
-REDIS_LOCAL_IP = '127.0.0.1'
-REDIS_LOCAL_USER = 'dash'
+REDIS_IP = '127.0.0.1'
 
-REDIS_REMOTE_IP = ''
-REDIS_REMOTE_USER = ''
-REDIS_REMOTE_PASSWORD = ''
+ZMQ_PROTOCOL = 'tcp'
+ZMQ_PORT = '5557'
+ZMQ_IP = '*'
+ZMQ_ADDR = ZMQ_PROTOCOL+'://'+ZMQ_IP+':'+ZMQ_PORT

@@ -14,7 +14,7 @@ from rfind_monitor.utils.redis import numpy_from_Redis
 
 
 # h5f = h5py.File(const.SOURCE_H5,'r')
-redis_client = redis.Redis(host=const.REDIS_LOCAL_IP, port=const.REDIS_PORT, db=0, username=const.REDIS_LOCAL_USER)
+redis_client = redis.Redis(host=const.REDIS_IP, port=const.REDIS_PORT, db=0)
 
 y_range = [20, 60]
 
@@ -29,7 +29,7 @@ app = Dash(
     title='RFInd Monitor',
     update_title=None,
     prevent_initial_callbacks=True,
-    # assets_folder=const.ASSETS_DIR+'/',
+    assets_folder=const.ASSETS_DIR,
 )
 
 def serve_layout():

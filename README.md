@@ -123,17 +123,23 @@ The middle man handles the zmq binding that has data pushed to it and writes tha
 
 12. Restart the apache server with `sudo systemctl reload apache2`.
 
-13. Move the redis service file into it's location and start the service.
+13. Move the redis service file into its location and start the service.
 
-```bash
-sudo cp /home/ubuntu/rfind-monitor/conf/redis.service /etc/systemd/system/redis.service
-sudo systemctl enable /etc/systemd/system/redis.service
-sudo systemctl start redis.service
-```
+    ```bash
+    sudo cp /home/ubuntu/rfind-monitor/conf/redis.service /etc/systemd/system/redis.service
+    sudo systemctl enable /etc/systemd/system/redis.service
+    sudo systemctl start redis.service
+    ```
 
-There are also a few lines you need to add to the `redis.conf` file - ask Nick for details.
+    There are also a few lines you need to add to the `redis.conf` file - ask Nick for details.
 
-14. Start the redis server and middle_man zmq processes with `supervisord` (the venv must be active and you must be in the rfind_monitor root directory)
+14. Move the middle man service file into its location and start the service.
+
+    ```bash
+    sudo cp /home/ubuntu/rfind-monitor/conf/middleman.service /etc/systemd/system/middleman.service
+    sudo systemctl enable /etc/systemd/system/middleman.service
+    sudo systemctl start middleman.service
+    ```
 
 ## Refs
 
