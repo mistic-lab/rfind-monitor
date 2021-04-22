@@ -21,7 +21,7 @@ def producer(verbose=False):
 
     # redis_client = redis.Redis(host=const.REDIS_REMOTE_IP, port=const.REDIS_PORT, db=0, password=const.REDIS_REMOTE_PASSWORD, username=const.REDIS_REMOTE_USER)
 
-    with h5py.File(const.SOURCE_H5,'r') as h5f:
+    with h5py.File(SOURCE_H5,'r') as h5f:
         if verbose: print(f"Using {SOURCE_H5} as file source")
 
         modlen = len(h5f['times'])
