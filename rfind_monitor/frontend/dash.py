@@ -2,6 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import ServersideOutput, ServersideOutputTransform, Trigger, TriggerTransform, DashProxy, Dash, Input, Output, State
+from dash.dependencies import ClientsideFunction
 
 import numpy as np
 # import h5py
@@ -35,8 +36,8 @@ def serve_layout():
 
     return html.Div(
         [
-            # dcc.Store(id='userStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}),#data={'session_id':session_id}),
-            dcc.Store(id='userStore'),
+            dcc.Store(id='userClientStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}),#data={'session_id':session_id}),
+            dcc.Store(id='userServerStore'),
             dcc.Interval(id='check_for_data', interval=const.UPDATE_STORE_RATE),
             dcc.Interval(id='update_gui', interval=const.UPDATE_GUI_RATE),
             dcc.Graph(id='spec', responsive=True, config=dict(displayModeBar=False), 
@@ -151,16 +152,16 @@ app.layout = serve_layout
 
 
 # @app.callback(
-#     ServersideOutput("userStore","data"),
+#     ServersideOutput( userServerStore","data"),
 #     [Input("check_for_data","n_intervals")],
 #     [
 #         State("spec", "relayoutData"),
-#         State("userStore", "data")
+#         State("userServerStore", "data")
 #     ],
 #     prevent_initial_call=True
 # )
-# def update_store(index, relayoutData, userStore):
-#     existing_store = userStore
+# def update_store(index, relayoutData, userServerStore):
+#     existing_store = userServerStore
 
 #     if existing_store==None:
 #         existing_store = {'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}
@@ -193,16 +194,16 @@ app.layout = serve_layout
 
 
 @app.callback(
-    ServersideOutput("userStore","data"),
+    ServersideOutput("userServerStore","data"),
     [Trigger("check_for_data","n_intervals")],
     [
         State("spec", "relayoutData"),
-        State("userStore", "data")
+        State("userServerStore", "data")
     ],
     prevent_initial_call=True
 )
-def update_store(relayoutData, userStore):
-    existing_store = userStore
+def update_server_store(relayoutData, userServerStore):
+    existing_store = userServerStore
 
     latest_message = numpy_from_Redis(redis_client, 'latest')
     latest_integration = np.array(latest_message[:-1])
@@ -236,57 +237,72 @@ def update_store(relayoutData, userStore):
 
         return existing_store
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# app.clientside_callback(
-#     ClientsideFunction(
-#         namespace='clientside',
-#         function_name='update_plots'
-#     ),
-#     [
-#         Output("spec", "extendData"),
-#         Output("waterfall", "extendData"),
-#     ],
-#     [
-#         Input("update_gui", "n_intervals"), # output n_intervals, an int
-#     ],
-#     State("userStore", "data"),
-#     prevent_initial_call=True
-# )
-
 @app.callback(
+    Output("userClientStore","data"),
+    [Trigger("update_gui", "n_intervals")],
+    [
+        State("userServerStore", "data"),
+        State("userClientStore", "data")
+    ],
+    prevent_initial_call=True
+)
+def update_client_store(userServerStore, userClientStore):
+    if (userServerStore==None) or (userServerStore['timestamp']==userClientStore['timestamp']):
+        raise PreventUpdate
+    else:
+        return {'spec': userServerStore['spec'], 'freqs': userServerStore['freqs'], 'timestamp':userServerStore['timestamp']}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_plots'
+    ),
     [
         Output("spec", "extendData"),
         Output("waterfall", "extendData"),
     ],
     [
-        Trigger("update_gui", "n_intervals"), # output n_intervals, an int
+        Input("userClientStore", "data"), # output n_intervals, an int
     ],
-    State("userStore", "data"),
+    # State("userClientStore", "data"),
     prevent_initial_call=True
 )
-def update_plots(userStore):
-    if userStore == None:
-        raise PreventUpdate
 
-    updatedSpec = [{'y': [userStore['spec'][const.WATERFALL_HEIGHT-1]], 'x': [userStore['freqs']]}, [0], const.SPEC_WIDTH]
-    updatedWaterfall = [{'z': [userStore['spec']]}, [0], const.WATERFALL_HEIGHT]
+# @app.callback(
+#     [
+#         Output("spec", "extendData"),
+#         Output("waterfall", "extendData"),
+#     ],
+#     [
+#         Trigger("update_gui", "n_intervals"), # output n_intervals, an int
+#         # Input( userServerStore", "data"),
+#     ],
+#     Store( userServerStore", "data"),
+#     prevent_initial_call=True
+# )
+# def update_plots userServerStore):
+#     if userServerStore == None:
+#         raise PreventUpdate
 
-    return [updatedSpec, updatedWaterfall]
+#     updatedSpec = [{'y':  userServerStore['spec'][const.WATERFALL_HEIGHT-1]], 'x':  userServerStore['freqs']]}, [0], const.SPEC_WIDTH]
+#     updatedWaterfall = [{'z':  userServerStore['spec']]}, [0], const.WATERFALL_HEIGHT]
+
+#     return [updatedSpec, updatedWaterfall]
 
 server = app.server
 
