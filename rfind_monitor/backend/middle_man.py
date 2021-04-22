@@ -1,12 +1,14 @@
 from pyarrow.plasma import start_plasma_store
 import zmq
 import zlib
-# from brain_plasma import Brain
-# import pyarrow.plasma as plasma
-# import pyarrow as pa
 import pickle
 import numpy as np
 import redis
+
+import msgpack
+import msgpack_numpy as m
+import redis
+m.patch()
 
 import rfind_monitor.const as const
 from rfind_monitor.utils.hashing import name_to_hash
@@ -41,18 +43,15 @@ def middleman(rate, verbose=False):
             # if verbose: print("-- Successfully pulled")
             # if verbose: print("- Trying to publish to WEB")
             try:
-                p = zlib.decompress(msg)
-                data = pickle.loads(p)
-                if verbose: print(f"Trying to write {data[-1]} to redis")
-                numpy_to_Redis(redis_client, np.array(data[:-1]), 'spec')
-                redis_client.set('timestamp',int(data[-1]))
-                # server_brain['spec'] = pa.array(data[:-1])
-                # server_brain['timestamp'] = data[-1]
+                # p = zlib.decompress(msg)
+                # data = pickle.loads(p)
 
-                # if verbose: print(f" Brain contains {server_brain['timestamp']}\n")
-                # spec_id = brain.put(data[:-1])
-                # timestamp_id = brain.put(data[-1])
-                # if verbose: print(f" Brain contains {brain.get(timestamp_id)}\n")
+                # if verbose: print(f"Trying to write {data[-1]} to redis")
+                # numpy_to_Redis(redis_client, np.array(data[:-1]), 'spec')
+                # redis_client.set('timestamp',int(data[-1]))
+                redis_client.set('latest', msg)
+                if verbose: print(f"Passed data from zmq to redis")
+
 
             except zmq.error.Again:
                 # if verbose: print("-- Failed to publish")

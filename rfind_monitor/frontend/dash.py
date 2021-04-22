@@ -6,8 +6,6 @@ from dash_extensions.enrich import ServersideOutput, ServersideOutputTransform, 
 
 import numpy as np
 # import h5py
-# from brain_plasma import Brain
-# import pyarrow as pa
 import redis
 
 from rfind_monitor.frontend.crunch import fetch_integration, reduce_integration
@@ -16,8 +14,7 @@ from rfind_monitor.utils.redis import numpy_from_Redis
 
 
 # h5f = h5py.File(const.SOURCE_H5,'r')
-# brain=Brain(path=const.PLASMA_SOCKET)
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(host=const.REDIS_LOCAL_IP, port=const.REDIS_PORT, db=0, username=const.REDIS_LOCAL_USER)
 
 y_range = [20, 60]
 
@@ -208,10 +205,9 @@ app.layout = serve_layout
 def update_store(relayoutData, userStore):
     existing_store = userStore
 
-    # latest_integration = brain['spec'].to_numpy()
-    latest_integration = numpy_from_Redis(redis_client,'spec')
-    latest_timestamp = redis_client.get('timestamp')
-    # latest_timestamp = brain['timestamp']
+    latest_message = numpy_from_Redis(redis_client, 'latest')
+    latest_integration = np.array(latest_message[:-1])
+    latest_timestamp = latest_message[-1]
 
     if existing_store==None:
         existing_store = {'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}
