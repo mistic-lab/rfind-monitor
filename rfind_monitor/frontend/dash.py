@@ -36,7 +36,6 @@ def serve_layout():
 
     return html.Div(
         [
-            dcc.Store(id='userClientStore', storage_type='memory', data={'spec': start_spec, 'freqs': start_freqs, 'timestamp': 0.0}),#data={'session_id':session_id}),
             dcc.Store(id='userServerStore'),
             dcc.Interval(id='check_for_data', interval=const.UPDATE_STORE_RATE),
             dcc.Interval(id='update_gui', interval=const.UPDATE_GUI_RATE),
@@ -90,7 +89,7 @@ def serve_layout():
             dcc.Graph(id='waterfall', responsive=True, config=dict(displayModeBar=False, doubleClick='reset'), 
                 figure={
                     'data': [{
-                        'type': 'heatmap',
+                        'type': 'heatmapgl',
                         'x': start_freqs,
                         # 'y': start_times,
                         'z': start_spec,
@@ -237,72 +236,75 @@ def update_server_store(relayoutData, userServerStore):
 
         return existing_store
 
-@app.callback(
-    Output("userClientStore","data"),
-    [Trigger("update_gui", "n_intervals")],
-    [
-        State("userServerStore", "data"),
-        State("userClientStore", "data")
-    ],
-    prevent_initial_call=True
-)
-def update_client_store(userServerStore, userClientStore):
-    if (userServerStore==None) or (userServerStore['timestamp']==userClientStore['timestamp']):
-        raise PreventUpdate
-    else:
-        return {'spec': userServerStore['spec'], 'freqs': userServerStore['freqs'], 'timestamp':userServerStore['timestamp']}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.clientside_callback(
-    ClientsideFunction(
-        namespace='clientside',
-        function_name='update_plots'
-    ),
-    [
-        Output("spec", "extendData"),
-        Output("waterfall", "extendData"),
-    ],
-    [
-        Input("userClientStore", "data"), # output n_intervals, an int
-    ],
-    # State("userClientStore", "data"),
-    prevent_initial_call=True
-)
-
 # @app.callback(
+#     Output("userClientStore","data"),
+#     [Trigger("update_gui", "n_intervals")],
+#     [
+#         State("userServerStore", "data"),
+#         State("userClientStore", "data")
+#     ],
+#     prevent_initial_call=True
+# )
+# def update_client_store(userServerStore, userClientStore):
+#     if (userServerStore==None) or (userServerStore['timestamp']==userClientStore['timestamp']):
+#         app.logger.info(f"userServerStore is none: {userServerStore==None}")
+#         app.logger.info(f"timestamps are the same: {userServerStore['timestamp']==userClientStore['timestamp']}")
+#         raise PreventUpdate
+#     else:
+#         app.logger.info("Updating client store")
+#         return {'spec': userServerStore['spec'], 'freqs': userServerStore['freqs'], 'timestamp':userServerStore['timestamp']}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# app.clientside_callback(
+#     ClientsideFunction(
+#         namespace='clientside',
+#         function_name='update_plots'
+#     ),
 #     [
 #         Output("spec", "extendData"),
 #         Output("waterfall", "extendData"),
 #     ],
 #     [
-#         Trigger("update_gui", "n_intervals"), # output n_intervals, an int
-#         # Input( userServerStore", "data"),
+#         Input("userClientStore", "data"), # output n_intervals, an int
 #     ],
-#     Store( userServerStore", "data"),
+#     # State("userClientStore", "data"),
 #     prevent_initial_call=True
 # )
-# def update_plots userServerStore):
-#     if userServerStore == None:
-#         raise PreventUpdate
 
-#     updatedSpec = [{'y':  userServerStore['spec'][const.WATERFALL_HEIGHT-1]], 'x':  userServerStore['freqs']]}, [0], const.SPEC_WIDTH]
-#     updatedWaterfall = [{'z':  userServerStore['spec']]}, [0], const.WATERFALL_HEIGHT]
+@app.callback(
+    [
+        Output("spec", "extendData"),
+        Output("waterfall", "extendData"),
+    ],
+    [
+        Trigger("update_gui", "n_intervals"), # output n_intervals, an int
+        # Input( userServerStore", "data"),
+    ],
+    State("userServerStore", "data"),
+    prevent_initial_call=True
+)
+def update_plots(userServerStore):
+    if userServerStore == None:
+        raise PreventUpdate
 
-#     return [updatedSpec, updatedWaterfall]
+    updatedSpec = [{'y': [userServerStore['spec'][const.WATERFALL_HEIGHT-1]], 'x': [userServerStore['freqs']]}, [0], const.SPEC_WIDTH]
+    updatedWaterfall = [{'z': [userServerStore['spec']]}, [0], const.WATERFALL_HEIGHT]
+
+    return [updatedSpec, updatedWaterfall]
 
 server = app.server
 
