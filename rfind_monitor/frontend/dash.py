@@ -1,4 +1,3 @@
-from rfind_monitor.utils.hashing import name_to_hash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.exceptions import PreventUpdate

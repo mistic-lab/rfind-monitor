@@ -6,3 +6,5 @@ ZMQ_PROTOCOL = 'tcp'
 ZMQ_PORT = '5557'
 ZMQ_IP = '*'
 ZMQ_ADDR = ZMQ_PROTOCOL+'://'+ZMQ_IP+':'+ZMQ_PORT
+
+SOURCE_H5 = '/home/ubuntu/rfind-monitor/data.h5'
