@@ -18,7 +18,7 @@ redis_client = redis.Redis(host=const.REDIS_IP, port=const.REDIS_PORT, db=0)
 
 y_range = [20, 60]
 
-start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH))
+start_spec = np.zeros((const.WATERFALL_HEIGHT, const.SPEC_WIDTH), dtype=const.DTYPE)
 start_freqs = np.linspace(0, 2e9, const.SPEC_WIDTH)
 
 
@@ -89,7 +89,7 @@ def serve_layout():
             dcc.Graph(id='waterfall', responsive=True, config=dict(displayModeBar=False, doubleClick='reset'), 
                 figure={
                     'data': [{
-                        'type': 'heatmapgl',
+                        'type': 'heatmap',
                         'x': start_freqs,
                         # 'y': start_times,
                         'z': start_spec,
@@ -108,7 +108,8 @@ def serve_layout():
                         'colorscale': 'Rainbow',
                         'zmin': y_range[0],
                         'zmax': y_range[1],
-                        'hovertemplate': "Freq: %{x} <br />Time: %{y} <br />Power: %{z} dB<extra></extra>"
+                        'hovertemplate': "Freq: %{x} <br />Time: %{y} <br />Power: %{z} dB<extra></extra>",
+                        # 'zsmooth': False
                     }],
                     'layout': {
                         'width': '100%',
@@ -205,7 +206,7 @@ def update_server_store(relayoutData, userServerStore):
     existing_store = userServerStore
 
     latest_message = numpy_from_Redis(redis_client, 'latest')
-    latest_integration = np.array(latest_message[:-1])
+    latest_integration = np.array(latest_message[:-1], dtype=const.DTYPE)
     latest_timestamp = latest_message[-1]
 
     if existing_store==None:

@@ -79,7 +79,7 @@ def reduce_integration(integration, f1, f2, nbins):
     index2 = int(index1+new_length)
 
     current_freqs = np.linspace(const.FULL_FREQS[index1], const.FULL_FREQS[index2-1], nbins)
-    reduced_integration = np.empty(nbins)
+    reduced_integration = np.empty(nbins, dtype = const.DTYPE)
 
     
     integration = integration[index1:index2]

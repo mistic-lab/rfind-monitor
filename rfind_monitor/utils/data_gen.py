@@ -72,7 +72,7 @@ def FM(fc, BW, t_arr):
     return st
 
 
-def integrated_spec_gen(noise_pwr, time):
+def integrated_spec_gen(noise_pwr, time) -> np.ndarray:
     t_incr = 0
 
     while t_incr <= time:
@@ -91,7 +91,7 @@ def integrated_spec_gen(noise_pwr, time):
 
         output = 10.*np.log10(np.abs(np.fft.fftshift(np.fft.fft(output))))
 
-        yield output
+        yield output.astype(const.DTYPE)
         t_incr += t_int
     return
 
@@ -114,7 +114,7 @@ def write_to_h5(noise_pwr, time):
 
 
 
-        h5f.create_dataset('spec', (n_integrations, const.NBINS))
+        h5f.create_dataset('spec', (n_integrations, const.NBINS), dtype=const.DTYPE)
         h5f.create_dataset('freqs', data=const.FULL_FREQS)
         h5f.create_dataset('times', data=start_timestamps)
 
